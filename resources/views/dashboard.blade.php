@@ -74,16 +74,28 @@
                                 <div class='max-w-md mx-auto space-y-6'>
 
                                     <form action="" method="POST" enctype="multipart/form-data">
-                                        <h2 class="text-2xl font-bold ">Submit your questions</h2>
+                                        <h2 class="text-2xl font-bold ">Savollar faylini yuboring</h2>
                                         <hr class="my-6">
-                                        <label class="uppercase text-sm font-bold opacity-70">Name</label>
-                                        <input type="text"
+                                        <label class="uppercase text-sm font-bold opacity-70">Fanni tanlang</label>
+                                        <select
+                                            class="w-full p-3 mt-2 mb-4 w-full bg-slate-200 rounded border-2 border-slate-200 focus:border-slate-600 focus:outline-none">
+                                            <option value=""></option>
+                                            <option value="">Algebra</option>
+                                            <option value="">Geometriya</option>
+                                            {{-- <option value="">Ingliz tili grammatika</option>
+                                            <option value="">Reading</option>
+                                            <option value="">Listening</option> --}}
+                                        </select>
+                                        <label class="uppercase text-sm font-bold opacity-70">Mavzuni kiriting</label>
+                                        <textarea rows="2"
+                                            class="p-3 mt-2 mb-4 w-full bg-slate-200 rounded border-2 border-slate-200 focus:border-slate-600 focus:outline-none"></textarea>
+                                        <label class="uppercase text-sm font-bold opacity-70">Faylni yuklang
+                                            (.pdf)</label>
+                                        <input type="file"
                                             class="p-3 mt-2 mb-4 w-full bg-slate-200 rounded border-2 border-slate-200 focus:border-slate-600 focus:outline-none">
-                                        <label class="uppercase text-sm font-bold opacity-70">Email</label>
-                                        <textarea rows="5" class="p-3 mt-2 mb-4 w-full bg-slate-200 rounded border-2 border-slate-200 focus:border-slate-600 focus:outline-none"></textarea>
-                                        <label class="uppercase text-sm font-bold opacity-70">File</label>
-                                        <input type="file" class="p-3 mt-2 mb-4 w-full bg-slate-200 rounded border-2 border-slate-200 focus:border-slate-600 focus:outline-none">
-                                        <input type="submit" class="py-3 px-6 my-2 bg-emerald-500 text-white font-medium rounded hover:bg-indigo-500 cursor-pointer ease-in-out duration-300" value="Send">
+                                        <input type="submit"
+                                            class="py-3 px-6 my-2 bg-emerald-500 text-white font-medium rounded hover:bg-indigo-500 cursor-pointer ease-in-out duration-300"
+                                            value="Yuborish">
                                     </form>
 
                                 </div>
