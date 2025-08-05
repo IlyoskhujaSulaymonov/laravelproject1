@@ -6,12 +6,12 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect('/dashboard');
-})->middleware(['auth']);
+    return view('landing');
+});
 
 Route::get('/dashboard', function () {
     return view('dashboard');
-})->name('dashboard');
+})->name('dashboard')->middleware(['auth']);
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');

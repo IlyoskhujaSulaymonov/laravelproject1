@@ -7,6 +7,12 @@ export default {
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
+
+        // ✅ Add these lines for React + TSX support
+        './resources/js/**/*.tsx',
+        './resources/js/**/*.ts',
+        './resources/js/**/*.jsx',
+        './resources/js/**/*.js',
     ],
 
     theme: {
