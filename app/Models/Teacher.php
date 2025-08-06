@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Teacher extends Model
 {
-    protected $table = 'teachers'; // Specify the table name if it's not the plural form of the model name
+    protected $table = 'teachers';
     
     use HasFactory;
 

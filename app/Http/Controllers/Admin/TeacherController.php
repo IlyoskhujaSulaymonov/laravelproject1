@@ -5,61 +5,64 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
+use App\Models\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class TeacherController extends Controller
 {
-    public function index()
+    public function dashboard()
     {
-        $teachers = Teacher::latest()->paginate(10);
-        return view('admin.teachers.index', compact('teachers'));
+        return view('teacher.dashboard');
     }
 
-    public function create()
+    public function list()
     {
-        return view('admin.teachers.create');
+        $files = UploadedFile::latest()->get();
+        return view('teacher.files', compact('files'));
     }
 
-    public function store(Request $request)
+    public function uploadForm()
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:teachers,email',
-            'phone'      => 'nullable|string|max:20',
+        return view('teacher.upload');
+    }
+
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string',
+            'file' => 'required|file'
         ]);
 
-        Teacher::create($validated);
+        $path = $request->file('file')->store('uploads', 'public');
 
-        return redirect()->route('admin.teachers.index')->with('success', 'O\'qituvchi qo\'shildi!');
-    }
-
-    public function show(Teacher $teacher)
-    {
-        return view('admin.teachers.show', compact('teacher'));
-    }
-
-    public function edit(Teacher $teacher)
-    {
-        return view('admin.teachers.edit', compact('teacher'));
-    }
-
-    public function update(Request $request, Teacher $teacher)
-    {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name'  => 'required|string|max:255',
-            'email'      => 'required|email|unique:teachers,email,' . $teacher->id,
-            'phone'      => 'nullable|string|max:20',
+        UploadedFile::create([
+            'title' => $request->title,
+            'file_path' => $path
         ]);
 
-        $teacher->update($validated);
-
-        return redirect()->route('admin.teachers.index')->with('success', 'O\'qituvchi yangilandi!');
+        return redirect()->route('teacher.files')->with('success', 'Fayl yuklandi!');
     }
 
-    public function destroy(Teacher $teacher)
+    public function delete($id)
     {
-        $teacher->delete();
-        return redirect()->route('admin.teachers.index')->with('success', 'O\'qituvchi o\'chirildi!');
+        $file = UploadedFile::findOrFail($id);
+        Storage::disk('public')->delete($file->file_path);
+        $file->delete();
+        return back()->with('success', 'Fayl o‘chirildi!');
+    }
+
+    public function edit($id)
+    {
+        $file = UploadedFile::findOrFail($id);
+        return view('teacher.edit', compact('file'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $file = UploadedFile::findOrFail($id);
+        $file->update([
+            'title' => $request->title,
+        ]);
+        return redirect()->route('teacher.files')->with('success', 'Muvaffaqiyatli tahrirlandi!');
     }
 }

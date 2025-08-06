@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Questions;
+use App\Models\Question;
 use App\Models\Student;
 
 use Illuminate\Http\Request;
@@ -11,13 +11,12 @@ class MainController extends Controller
 
     public function main()
     {
-        return redirect('/dashboard');
+        return redirect('admin.dashboard');
     }
 
     public function dashboard()
     {
-        return view('dashboard')->with([
-            'questions' => Questions::latest()->paginate(10),
+        return view('admin.dashboard')->with([
             'students' => Student::all(),
         ]);
     }
