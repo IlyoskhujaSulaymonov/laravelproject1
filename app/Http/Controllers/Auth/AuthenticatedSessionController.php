@@ -24,13 +24,26 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-
         $request->authenticate();
-
         $request->session()->regenerate();
 
-       return redirect()->route('admin.dashboard');
+        $user = $request->user();
+
+        // foydalanuvchi roli asosida yo'naltirish
+        if ($user->role_id === 1) {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role_id === 2) {
+            return redirect()->route('teacher.dashboard');
+        } elseif ($user->role_id === 3) {
+            return redirect()->route('student.dashboard');
+        }
+
+
+        // agar roli aniqlanmasa
+        Auth::logout();
+        return redirect('/login')->withErrors(['email' => 'Ruxsatsiz rol.']);
     }
+
 
     /**
      * Destroy an authenticated session.
