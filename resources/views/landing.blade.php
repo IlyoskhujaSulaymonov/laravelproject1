@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Landing Page</title>
+    <title>AI uztoz</title>
+    <meta name="description" content="Ta'lim boshqaruv tizimi - o'qituvchilar, talabalar va darslarni boshqarish">
+        <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" sizes="192x192" href="{{ asset('/images/logo.png') }}">
+
     @viteReactRefresh
     @vite(['resources/js/app.tsx', 'resources/css/app.css'])
 </head>

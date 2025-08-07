@@ -341,7 +341,7 @@ export default function EducationLanding() {
       </header>
 
       {/* Enhanced Hero Section */}
-      <section id="home" className="pt-40 pb-20 px-4 relative overflow-hidden">
+      <section id="home" className="pt-60 pb-20 px-4 relative overflow-hidden">
         {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
