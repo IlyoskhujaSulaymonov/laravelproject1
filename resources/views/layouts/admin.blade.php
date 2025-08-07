@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Ta'lim boshqaruv tizimi - o'qituvchilar, talabalar va darslarni boshqarish">
 
-        <!-- Favicon -->
+    <!-- Favicon -->
     <link rel="icon" type="image/jpeg" sizes="192x192" href="{{ asset('/images/logo.png') }}">
 
     <title>@yield('title', 'Ta\'lim Boshqaruvi - Ta\'lim Boshqaruv Tizimi')</title>
@@ -29,6 +29,8 @@
     <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
 
     @stack('styles')
+
+
 </head>
 
 <body>
@@ -132,8 +134,8 @@
 
                 <div class="menu-section">
                     <h6 class="menu-title">TIZIM</h6>
-                    {{-- <ul class="nav nav-pills nav-sidebar flex-column" role="menubar">
-                        <li class="nav-item" role="none">
+                    <ul class="nav nav-pills nav-sidebar flex-column" role="menubar">
+                        {{-- <li class="nav-item" role="none">
                             <a href="{{ route('admin.settings') }}" 
                                class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"
                                role="menuitem"
@@ -141,17 +143,17 @@
                                 <i class="fas fa-cog nav-icon" aria-hidden="true"></i>
                                 <span class="nav-text">Sozlamalar</span>
                             </a>
-                        </li>
+                        </li> --}}
                         <li class="nav-item" role="none">
-                            <a href="{{ route('admin.users') }}" 
-                               class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}"
-                               role="menuitem"
-                               aria-current="{{ request()->routeIs('admin.users*') ? 'page' : 'false' }}">
+                            <a href="{{ route('admin.users.index') }}"
+                                class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
+                                role="menuitem"
+                                aria-current="{{ request()->routeIs('admin.users.*') ? 'page' : 'false' }}">
                                 <i class="fas fa-users nav-icon" aria-hidden="true"></i>
                                 <span class="nav-text">Foydalanuvchilar</span>
                             </a>
                         </li>
-                    </ul> --}}
+                    </ul>
                 </div>
             </div>
         </nav>
@@ -284,6 +286,24 @@
 
     <!-- Custom JS -->
     <script src="{{ asset('js/admin.js') }}"></script>
+
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    </script>
+
 
     @stack('scripts')
 </body>
