@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Teacher;
 
 class UserController extends Controller
 {
@@ -25,14 +26,25 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
+            'role'     => 'required|string|in:admin,teacher,student',
+            'phone'    => 'nullable|string|max:20',
         ]);
 
         $validated['password'] = bcrypt($validated['password']);
 
-        User::create($validated);
+        $user = User::create($validated);
+
+        if ($validated['role'] === 'teacher') {
+            Teacher::create([
+                'user_id'    => $user->id,
+                'name' => $validated['name'],
+                'email'      => $validated['email'],
+                'phone'      => $validated['phone'],
+            ]);
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'Foydalanuvchi muvaffaqiyatli qo‘shildi.');
     }
@@ -49,6 +61,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone'      => 'nullable|string|max:20',
             'password' => 'nullable|string|min:6|confirmed',
         ]);
 
@@ -59,6 +72,17 @@ class UserController extends Controller
         }
 
         $user->update($validated);
+
+        if ($user->role === 'teacher') {
+            $teacher = $user->teacher;
+            if ($teacher) {
+                $teacher->update([
+                    'name'  => $validated['name'],
+                    'email' => $validated['email'],
+                    'phone' => $validated['phone'] ?? null,
+                ]);
+            }
+        }
 
         return redirect()->route('admin.users.index')->with('success', 'Foydalanuvchi yangilandi.');
     }

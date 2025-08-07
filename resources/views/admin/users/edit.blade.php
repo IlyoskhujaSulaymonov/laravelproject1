@@ -25,6 +25,14 @@
             </div>
 
             <div class="mb-3">
+                <label>Telefon nomer</label>
+                <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
+                @error('phone')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+
+            <div class="mb-3">
                 <label>Yangi parol (ixtiyoriy)</label>
                 <div class="input-group">
                     <input type="password" name="password" id="password" class="form-control" required>

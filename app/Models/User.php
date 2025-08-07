@@ -23,6 +23,7 @@ class User extends Authenticatable
         'role_id',
         'name',
         'email',
+        'phone',
         'password',
     ];
 
@@ -49,7 +50,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function role(){return $this->belongsTo(Role::class);}    
-    public function teachers(){return $this->hasMany(Teacher::class);}
-
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class);
+    }
 }

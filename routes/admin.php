@@ -47,6 +47,10 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
     Route::resource('roles', RoleController::class);
 });
 
+Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+    Route::resource('teachers', TeacherController::class);
+});
+
 
 
 
