@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\Admin\UserController;
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');
@@ -36,6 +37,12 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
 Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::resource('tasks', TaskController::class);
 });
+
+Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+    Route::resource('users', UserController::class);
+});
+
+
 
 
 Route::get('/dashboard', [MainController::class, 'dashboard'])->name('dashboard');
