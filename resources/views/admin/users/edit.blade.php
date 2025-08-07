@@ -49,9 +49,16 @@
             </div>
 
             <div class="mb-3">
-                <label>Roli (ID)</label>
-                <input type="number" name="role_id" class="form-control" value="{{ old('role_id', $user->role_id) }}"
-                    required>
+                <label>Roli</label>
+                <select name="role_id" class="form-control" required>
+                    <option value="">-- Tanlang --</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->id }}"
+                            {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+                            {{ $role->name }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('role_id')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
