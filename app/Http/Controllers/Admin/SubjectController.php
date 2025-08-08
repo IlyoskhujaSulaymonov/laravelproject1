@@ -51,6 +51,10 @@ class SubjectController extends Controller
 
     public function destroy(Subject $subject)
     {
+        if ($subject->topics()->exists()) {
+            return redirect()->route('admin.subjects.index')->with('error', 'Fanni o‘chirish mumkin emas, chunki unga bog‘langan mavzular mavjud.');
+        }
+
         $subject->delete();
         return redirect()->route('admin.subjects.index')->with('success', 'Fan o‘chirildi.');
     }

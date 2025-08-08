@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Admin\TopicController;
 use App\Http\Controllers\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\TeacherController;
@@ -11,6 +13,7 @@ use App\Http\Controllers\MainController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Models\Question;
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');
@@ -32,11 +35,19 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
 });
 
 Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+    Route::resource('topics', TopicController::class);
+});
+
+Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::resource('subjects', SubjectController::class);
 });
 
 Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
     Route::resource('tasks', TaskController::class);
+});
+
+Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+    Route::resource('questions', QuestionController::class);
 });
 
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {

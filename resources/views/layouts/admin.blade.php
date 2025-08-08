@@ -102,11 +102,20 @@
                                 <span class="nav-text">Fanlar</span>
                             </a>
                         </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.tasks.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.tasks*') ? 'active' : '' }}"
+                         <li class="nav-item" role="none">
+                            <a href="{{ route('admin.topics.index') }}"
+                                class="nav-link {{ request()->routeIs('admin.topics*') ? 'active' : '' }}"
                                 role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.tasks*') ? 'page' : 'false' }}">
+                                aria-current="{{ request()->routeIs('admin.topics*') ? 'page' : 'false' }}">
+                                <i class="fas fa-tags nav-icon" aria-hidden="true"></i>
+                                <span class="nav-text">Mavzular</span>
+                            </a>
+                        </li>
+                        <li class="nav-item" role="none">
+                            <a href="{{ route('admin.questions.index') }}"
+                                class="nav-link {{ request()->routeIs('admin.questions*') ? 'active' : '' }}"
+                                role="menuitem"
+                                aria-current="{{ request()->routeIs('admin.questions*') ? 'page' : 'false' }}">
                                 <i class="fas fa-clipboard-list nav-icon" aria-hidden="true"></i>
                                 <span class="nav-text">Vazifalar va Topshiriqlar</span>
                             </a>
