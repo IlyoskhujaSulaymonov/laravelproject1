@@ -17,7 +17,7 @@
             <tr>
                 <th>Ismi</th>
                 <th>Email</th>
-                <th>Telefon</th>
+                <th>Telefon nomer</th>
                 <th>Amallar</th>
             </tr>
         </thead>

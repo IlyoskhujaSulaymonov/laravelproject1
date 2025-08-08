@@ -153,6 +153,15 @@
                                 <span class="nav-text">Foydalanuvchilar</span>
                             </a>
                         </li>
+                        <li class="nav-item" role="none">
+                            <a href="{{ route('admin.roles.index') }}"
+                                class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
+                                role="menuitem"
+                                aria-current="{{ request()->routeIs('admin.roles.*') ? 'page' : 'false' }}">
+                                <i class="fas fa-user-tag nav-icon" aria-hidden="true"></i>
+                                <span class="nav-text">Rollar</span>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>

@@ -25,6 +25,14 @@
             </div>
 
             <div class="mb-3">
+                <label>Telefon nomer</label>
+                <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
+                @error('phone')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+
+            <div class="mb-3">
                 <label>Yangi parol (ixtiyoriy)</label>
                 <div class="input-group">
                     <input type="password" name="password" id="password" class="form-control" required>
@@ -49,9 +57,16 @@
             </div>
 
             <div class="mb-3">
-                <label>Roli (ID)</label>
-                <input type="number" name="role_id" class="form-control" value="{{ old('role_id', $user->role_id) }}"
-                    required>
+                <label>Roli</label>
+                <select name="role_id" class="form-control" required>
+                    <option value="">-- Tanlang --</option>
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->id }}"
+                            {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+                            {{ $role->name }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('role_id')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror

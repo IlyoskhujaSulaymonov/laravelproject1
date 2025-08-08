@@ -1,48 +1,53 @@
 @extends('layouts.admin')
 
 @section('content')
-<div class="container">
-    <h1 class="mb-4">Foydalanuvchilar ro'yxati</h1>
-
-    <a href="{{ route('admin.users.create') }}" class="btn btn-primary mb-3">Yangi foydalanuvchi qo‘shish</a>
+<div class="container mt-4">
+    <h2>Foydalanuvchilar ro‘yxati</h2>
 
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
     @endif
 
-    <table class="table table-bordered">
-        <thead>
+    <a href="{{ route('admin.users.create') }}" class="btn btn-primary mb-3">+ Yangi foydalanuvchi qo‘shish</a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
             <tr>
                 <th>#</th>
-                <th>Ismi</th>
+                <th>Ism</th>
                 <th>Email</th>
-                <th>Roli</th>
+                <th>Telefon</th>
+                <th>Rol</th>
                 <th>Amallar</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($users as $index => $user)
+            @forelse ($users as $index => $user)
                 <tr>
-                    <td>{{ $index + $users->firstItem() }}</td>
+                    <td>{{ $index + 1 }}</td>
                     <td>{{ $user->name }}</td>
                     <td>{{ $user->email }}</td>
-                    <td>{{ $user->role_id }}</td>
+                    <td>{{ $user->phone }}</td>
+                    <td>{{ ucfirst($user->role_id) }}</td>
                     <td>
-                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-warning">Tahrirlash</a>
-
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Foydalanuvchini o‘chirishga ishonchingiz komilmi?')">
+                        <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-warning btn-sm">Tahrirlash</a>
+                        <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-danger">O‘chirish</button>
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Haqiqatan ham o‘chirmoqchimisiz?')">
+                                O‘chirish
+                            </button>
                         </form>
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5">Hozircha foydalanuvchilar yo‘q.</td></tr>
+                <tr>
+                    <td colspan="6" class="text-center">Hozircha foydalanuvchilar yo‘q</td>
+                </tr>
             @endforelse
         </tbody>
     </table>
-
-    {{ $users->links() }}
 </div>
 @endsection

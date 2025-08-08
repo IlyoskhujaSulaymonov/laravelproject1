@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\MainController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\RoleController;
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');
@@ -40,6 +41,14 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
 
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
     Route::resource('users', UserController::class);
+});
+
+Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+    Route::resource('roles', RoleController::class);
+});
+
+Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+    Route::resource('teachers', TeacherController::class);
 });
 
 

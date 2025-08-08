@@ -8,8 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 class Teacher extends Model
 {
     protected $table = 'teachers';
-    
+
     use HasFactory;
 
-    protected $fillable = ['first_name', 'last_name', 'email', 'phone'];
+    protected $fillable = ['user_id', 'name', 'email', 'phone'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+
+    protected static function booted()
+    {
+        static::deleting(function ($teacher) {
+            if ($teacher->user) {
+                $teacher->user->delete();
+            }
+        });
+    }
 }
