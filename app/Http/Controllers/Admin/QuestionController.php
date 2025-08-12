@@ -74,4 +74,31 @@ class QuestionController extends Controller
         $question->delete();
         return redirect()->route('admin.questions.index')->with('success', 'Savol o‘chirildi!');
     }
+
+    public function questionsImport()
+    {
+        $topics = Topic::all();
+        return view('admin.questions.import', compact('topics'));
+    }
+
+    public function questionsImportStore(Request $request)
+    {
+        $request->validate([
+            'pdf' => 'required|file|mimes:pdf',
+            'topic_id' => 'required|exists:topics,id',
+        ]);
+
+
+        $pdfPath = $request->file('pdf')->store('uploads/questions','public');
+
+
+        // try {
+            $service = new \App\Services\PdfQuestionImportService();
+          $service->importFromPdf(storage_path('app/public/' . $pdfPath), $request->topic_id);
+            return redirect()->route('admin.questions.index')->with('success', 'Savollar muvaffaqiyatli import qilindi!');
+        // } catch (\Exception $e) {
+        //     return redirect()->back()->withErrors(['error' => $e->getMessage()]);
+        // }
+    }
+
 }

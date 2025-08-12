@@ -20,4 +20,13 @@ class MainController extends Controller
             'students' => Student::all(),
         ]);
     }
+
+    public function notificationsCheck(Request $request)
+    {
+        // Logic to check notifications
+        // This is a placeholder; implement your notification logic here
+        $notifications = []; // Fetch notifications from the database or service
+
+        return response()->json($notifications);
+    }
 }

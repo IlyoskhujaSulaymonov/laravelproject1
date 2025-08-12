@@ -1,11 +1,17 @@
 import '../css/app.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import NextThemesProvider from "./pages/landing"
+import Question from './pages/question';
+import Landing from './pages/landing';
 
+const el = document.getElementById('app');
+const page = el?.getAttribute('data-page');
 
-ReactDOM.createRoot(document.getElementById("app")!).render(
-  <React.StrictMode>
-    <NextThemesProvider />
-  </React.StrictMode>
-)
+if (el) {
+    ReactDOM.createRoot(el).render(
+        <React.StrictMode>
+            {page === 'landing' && <Landing />}
+            {page === 'question' && <Question />}
+        </React.StrictMode>
+    );
+}

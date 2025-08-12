@@ -28,6 +28,9 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
 
+    @viteReactRefresh
+    @vite(['resources/js/app.tsx', 'resources/css/app.css'])
+
     @stack('styles')
 
 

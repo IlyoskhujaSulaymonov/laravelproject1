@@ -62,10 +62,14 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
     Route::resource('teachers', TeacherController::class);
 });
 
+ Route::get('/admin/questions-import/create', [QuestionController::class, 'questionsImport'])->name('admin.questions.import.create');
+ Route::post('/admin/questions-import/store', [QuestionController::class, 'questionsImportStore'])->name('admin.questions.import.store');
+
 
 
 
 Route::get('/dashboard', [MainController::class, 'dashboard'])->name('dashboard');
+Route::get('admin/notifications/check', [MainController::class, 'notificationsCheck'])->name('notifications.check');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/teacher/dashboard', [TeacherController::class, 'dashboard'])->name('teacher.dashboard');
