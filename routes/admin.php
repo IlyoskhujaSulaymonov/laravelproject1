@@ -47,7 +47,14 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
 });
 
 Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
-    Route::resource('questions', QuestionController::class);
+    Route::get('questions/topics/list', [QuestionController::class, 'topicList'])->name('questions.topic.list');
+    Route::get('questions/{topic}', [QuestionController::class, 'index'])->name('questions.index');
+    Route::get('questions/create/{topic}', [QuestionController::class, 'create'])->name('questions.create');
+    Route::post('questions/{topic}', [QuestionController::class, 'store'])->name('questions.store');
+    Route::get('questions/edit/{topic}/{question}', [QuestionController::class, 'edit'])->name('questions.edit');
+    Route::put('questions/{topic}/{question}', [QuestionController::class, 'update'])->name('questions.update');
+    Route::delete('questions/{topic}/{question}', [QuestionController::class, 'destroy'])->name('questions.destroy');
+     Route::get('questions/show/{topic}/{question}', [QuestionController::class, 'show'])->name('questions.show');
 });
 
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
@@ -61,12 +68,6 @@ Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () 
 Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
     Route::resource('teachers', TeacherController::class);
 });
-
- Route::get('/admin/questions-import/create', [QuestionController::class, 'questionsImport'])->name('admin.questions.import.create');
- Route::post('/admin/questions-import/store', [QuestionController::class, 'questionsImportStore'])->name('admin.questions.import.store');
-
-
-
 
 Route::get('/dashboard', [MainController::class, 'dashboard'])->name('dashboard');
 Route::get('admin/notifications/check', [MainController::class, 'notificationsCheck'])->name('notifications.check');

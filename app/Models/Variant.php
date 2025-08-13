@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Variant extends Model
 {
-    protected $fillable = ['question_id', 'text', 'is_correct','image_path','is_correct', 'format'];
+    protected $fillable = ['question_id', 'text', 'is_correct','option_letter','formulas'];
 
     public function question()
     {

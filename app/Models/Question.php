@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Question extends Model
 {
-protected $fillable = ['topic_id', 'content','image_path','format'];
+protected $fillable = ['topic_id', 'question','formulas','images'];
 
     public function topic()
     {

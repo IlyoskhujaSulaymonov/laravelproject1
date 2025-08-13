@@ -189,7 +189,7 @@ export function MathPopup({ isOpen, onClose, onInsert, initialValue = "", isEdit
                 </div>
               )}
 
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
+              {/* <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4">
                 <div className="text-sm text-amber-800 space-y-2">
                   <p className="font-semibold text-amber-900">💡 Maslahatlar:</p>
                   <ul className="list-disc list-inside space-y-1 ml-2">
@@ -200,7 +200,7 @@ export function MathPopup({ isOpen, onClose, onInsert, initialValue = "", isEdit
                     <li>Klavatura tugmasini bosib virtual klavaturani oching</li>
                   </ul>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {latex && (

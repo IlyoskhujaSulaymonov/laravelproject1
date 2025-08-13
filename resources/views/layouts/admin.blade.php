@@ -115,7 +115,7 @@
                             </a>
                         </li>
                         <li class="nav-item" role="none">
-                            <a href="{{ route('admin.questions.index') }}"
+                            <a href="{{ route('admin.questions.topic.list') }}"
                                 class="nav-link {{ request()->routeIs('admin.questions*') ? 'active' : '' }}"
                                 role="menuitem"
                                 aria-current="{{ request()->routeIs('admin.questions*') ? 'page' : 'false' }}">

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { MathRenderer } from "@/components/math-renderer"
 import { Edit, Trash2, ImageIcon, Plus, Calculator } from "lucide-react"
-import { MathPopup } from "@/components/math-popup" // Added missing MathPopup component import
+import { MathPopup } from "@/components/math-popup"
 
 interface MathFormula {
   id: string
@@ -28,10 +28,14 @@ interface QuestionVariant {
   id: string
   text: string
   isCorrect: boolean
-  formulas: MathFormula[]
 }
 
-export function MathQuestionEditor() {
+interface MathQuestionEditorProps {
+  questionId?: string
+  mode?: "create" | "edit"
+}
+
+export function MathQuestionEditor({ questionId, mode = "create" }: MathQuestionEditorProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [question, setQuestion] = useState("")
   const [showMathPopup, setShowMathPopup] = useState(false)
@@ -39,19 +43,44 @@ export function MathQuestionEditor() {
   const [formulas, setFormulas] = useState<MathFormula[]>([])
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([])
   const [variants, setVariants] = useState<QuestionVariant[]>([
-    { id: "variant-a", text: "", isCorrect: true, formulas: [] },
-    { id: "variant-b", text: "", isCorrect: false, formulas: [] },
-    { id: "variant-c", text: "", isCorrect: false, formulas: [] },
-    { id: "variant-d", text: "", isCorrect: false, formulas: [] },
+    { id: "variant-a", text: "", isCorrect: true },
+    { id: "variant-b", text: "", isCorrect: false },
+    { id: "variant-c", text: "", isCorrect: false },
+    { id: "variant-d", text: "", isCorrect: false },
   ])
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const [editingVariantFormula, setEditingVariantFormula] = useState<{
     variantId: string
     formula: MathFormula | null
   }>({ variantId: "", formula: null })
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [cursorPosition, setCursorPosition] = useState(0)
+  const [variantCursorPositions, setVariantCursorPositions] = useState<Record<string, number>>({})
+  const variantTextareaRefs = useRef<Record<string, HTMLTextAreaElement | null>>({})
+
+  useEffect(() => {
+    if (mode === "edit" && questionId) {
+      const questionData = (window as any).question
+      setQuestion(questionData.question || "")
+
+      const mappedVariants = questionData.variants?.map((variant: any, index: number) => ({
+        id: `variant-${String.fromCharCode(97 + index)}`, // a, b, c, d
+        text: variant.text || "",
+        isCorrect: variant.is_correct || false,
+      })) || [
+        { id: "variant-a", text: "", isCorrect: true },
+        { id: "variant-b", text: "", isCorrect: false },
+        { id: "variant-c", text: "", isCorrect: false },
+        { id: "variant-d", text: "", isCorrect: false },
+      ]
+
+      setVariants(mappedVariants)
+      setFormulas(Array.isArray(questionData.formulas) ? questionData.formulas : [])
+      setUploadedImages(Array.isArray(questionData.images) ? questionData.images : [])
+    }
+  }, [mode])
 
   useEffect(() => {
     const formulaRegex = /\$\$?([^$]+)\$\$?/g
@@ -83,6 +112,9 @@ export function MathQuestionEditor() {
       }
     }
     setUploadedImages((prev) => {
+      if (!Array.isArray(prev)) {
+        prev = []
+      }
       const newImages = foundImages.filter((img) => !prev.some((p) => p.id === img.id))
       return [...prev.filter((img) => foundImages.some((f) => f.id === img.id)), ...newImages]
     })
@@ -210,56 +242,111 @@ export function MathQuestionEditor() {
     )
   }
 
-  const addVariantFormula = (variantId: string, latex: string) => {
-    const newFormula: MathFormula = {
-      id: Math.random().toString(36).substr(2, 9),
-      latex,
-    }
-    setVariants((prev) =>
-      prev.map((variant) =>
-        variant.id === variantId ? { ...variant, formulas: [...variant.formulas, newFormula] } : variant,
-      ),
-    )
-  }
-
-  const updateVariantFormula = (variantId: string, formulaId: string, latex: string) => {
-    setVariants((prev) =>
-      prev.map((variant) =>
-        variant.id === variantId
-          ? {
-              ...variant,
-              formulas: variant.formulas.map((formula) => (formula.id === formulaId ? { ...formula, latex } : formula)),
-            }
-          : variant,
-      ),
-    )
-  }
-
-  const deleteVariantFormula = (variantId: string, formulaId: string) => {
-    setVariants((prev) =>
-      prev.map((variant) =>
-        variant.id === variantId
-          ? { ...variant, formulas: variant.formulas.filter((formula) => formula.id !== formulaId) }
-          : variant,
-      ),
-    )
-  }
-
-  const openVariantMathPopup = (variantId: string, formula?: MathFormula) => {
-    setEditingVariantFormula({ variantId, formula: formula || null })
-    setShowMathPopup(true)
-  }
-
   const handleVariantFormulaInsert = (latex: string) => {
     if (editingVariantFormula.variantId) {
       if (editingVariantFormula.formula) {
-        updateVariantFormula(editingVariantFormula.variantId, editingVariantFormula.formula.id, latex)
+        const variant = variants.find((v) => v.id === editingVariantFormula.variantId)
+        if (variant && editingVariantFormula.formula) {
+          const oldFormula = `$${editingVariantFormula.formula.latex}$`
+          const newFormula = `$${latex}$`
+          const newText = variant.text.replace(oldFormula, newFormula)
+          updateVariantText(editingVariantFormula.variantId, newText)
+        }
       } else {
-        addVariantFormula(editingVariantFormula.variantId, latex)
+        const variant = variants.find((v) => v.id === editingVariantFormula.variantId)
+        const cursorPos = variantCursorPositions[editingVariantFormula.variantId] || 0
+        if (variant) {
+          const beforeCursor = variant.text.substring(0, cursorPos)
+          const afterCursor = variant.text.substring(cursorPos)
+          const newFormula = `$${latex}$ `
+          const newText = beforeCursor + newFormula + afterCursor
+          updateVariantText(editingVariantFormula.variantId, newText)
+
+          setTimeout(() => {
+            const textarea = variantTextareaRefs.current[editingVariantFormula.variantId]
+            if (textarea) {
+              const newPosition = cursorPos + newFormula.length
+              textarea.setSelectionRange(newPosition, newPosition)
+              textarea.focus()
+            }
+          }, 0)
+        }
       }
     }
     setEditingVariantFormula({ variantId: "", formula: null })
     setShowMathPopup(false)
+  }
+
+  const handleVariantTextareaChange = (variantId: string, value: string, selectionStart: number) => {
+    updateVariantText(variantId, value)
+    setVariantCursorPositions((prev) => ({ ...prev, [variantId]: selectionStart }))
+  }
+
+  const handleVariantTextareaClick = (variantId: string, selectionStart: number) => {
+    setVariantCursorPositions((prev) => ({ ...prev, [variantId]: selectionStart }))
+  }
+
+  const openVariantMathPopup = (variantId: string, formula?: MathFormula) => {
+    if (formula) {
+      const variant = variants.find((v) => v.id === variantId)
+      if (variant) {
+        const formulaText = `$${formula.latex}$`
+        if (variant.text.includes(formulaText)) {
+          setEditingVariantFormula({ variantId, formula })
+        }
+      }
+    } else {
+      setEditingVariantFormula({ variantId, formula: null })
+    }
+    setShowMathPopup(true)
+  }
+
+  const getVariantFormulas = (variantText: string): MathFormula[] => {
+    const formulaRegex = /\$\$?([^$]+)\$\$?/g
+    const foundFormulas: MathFormula[] = []
+    let match
+
+    while ((match = formulaRegex.exec(variantText)) !== null) {
+      foundFormulas.push({
+        id: Math.random().toString(36).substr(2, 9),
+        latex: match[1].trim(),
+        position: match.index,
+      })
+    }
+    return foundFormulas
+  }
+
+  const deleteVariantFormula = (variantId: string, formula: MathFormula) => {
+    const variant = variants.find((v) => v.id === variantId)
+    if (variant) {
+      const formulaText = `$${formula.latex}$`
+      const newText = variant.text.replace(formulaText, "")
+      updateVariantText(variantId, newText)
+    }
+  }
+
+  const renderVariantContent = (text: string) => {
+    const parts = text.split(/(\$\$?[^$]+\$\$?)/g)
+
+    return (
+      <div className="inline-block w-full">
+        {parts.map((part, index) => {
+          if (part.includes("$")) {
+            return (
+              <span key={index} className="inline-block">
+                <MathRenderer latex={part} />
+              </span>
+            )
+          } else {
+            return (
+              <span key={index} className="inline">
+                {part}
+              </span>
+            )
+          }
+        })}
+      </div>
+    )
   }
 
   const updateVariantText = (id: string, text: string) => {
@@ -270,7 +357,7 @@ export function MathQuestionEditor() {
     setVariants((prev) =>
       prev.map((variant) => ({
         ...variant,
-        isCorrect: variant.id === id, // Only the selected variant is correct, all others are false
+        isCorrect: variant.id === id,
       })),
     )
   }
@@ -281,13 +368,12 @@ export function MathQuestionEditor() {
       id: `variant-${newVariantLetter.toLowerCase()}`,
       text: "",
       isCorrect: false,
-      formulas: [],
     }
     setVariants([...variants, newVariant])
   }
 
   const removeVariant = (variantId: string) => {
-    if (variants.length <= 2) return // Keep minimum 2 variants
+    if (variants.length <= 2) return
     setVariants(variants.filter((variant) => variant.id !== variantId))
   }
 
@@ -304,7 +390,7 @@ export function MathQuestionEditor() {
       case 1:
         return question.trim().length > 0
       case 2:
-        return variants.some((v) => v.isCorrect) && variants.some((v) => v.text.trim().length > 0)
+        return variants.some((v) => v.isCorrect) && areAllVariantsNonEmpty() && areAllVariantsUnique()
       default:
         return true
     }
@@ -318,6 +404,16 @@ export function MathQuestionEditor() {
 
     if (variants.length > 0 && !variants.some((v) => v.isCorrect)) {
       setSaveMessage("Iltimos, to'g'ri javobni belgilang!")
+      return
+    }
+
+    if (!areAllVariantsNonEmpty()) {
+      setSaveMessage("Iltimos, barcha variantlarni to'ldiring!")
+      return
+    }
+
+    if (!areAllVariantsUnique()) {
+      setSaveMessage("Iltimos, barcha variantlar turlicha bo'lishi kerak!")
       return
     }
 
@@ -347,34 +443,49 @@ export function MathQuestionEditor() {
         formData.append("_token", csrfToken)
       }
 
-     const response = await fetch(route('admin.questions.store'), {
-        method: "POST",
+      const topicId = typeof window !== "undefined" ? (window as any).topic?.id : null
+      const questionId = typeof window !== "undefined" ? (window as any).questionId : null
+
+      const url =
+        mode === "edit" ? `/admin/questions/${topicId}/${questionId}` : `/admin/questions/${topicId}`
+
+      if (mode === "edit") {
+        formData.append("_method", "PUT")
+      }
+
+      const response = await fetch(url, {
+        method: "POST", // Always POST, Laravel will handle _method override
         body: formData,
         headers: {
           "X-Requested-With": "XMLHttpRequest",
         },
-      });
+      })
 
       const result = await response.json()
 
       if (result.success) {
         setSaveMessage(result.message)
-        setQuestion("")
-        setFormulas([])
-        setUploadedImages([])
-        setVariants([
-          { id: "variant-a", text: "", isCorrect: true, formulas: [] },
-          { id: "variant-b", text: "", isCorrect: false, formulas: [] },
-          { id: "variant-c", text: "", isCorrect: false, formulas: [] },
-          { id: "variant-d", text: "", isCorrect: false, formulas: [] },
-        ])
-        uploadedImages.forEach((image) => {
-          URL.revokeObjectURL(image.url)
-        })
+
+        if (mode === "create") {
+          setQuestion("")
+          setFormulas([])
+          setUploadedImages([])
+          setVariants([
+            { id: "variant-a", text: "", isCorrect: true },
+            { id: "variant-b", text: "", isCorrect: false },
+            { id: "variant-c", text: "", isCorrect: false },
+            { id: "variant-d", text: "", isCorrect: false },
+          ])
+          uploadedImages.forEach((image) => {
+            URL.revokeObjectURL(image.url)
+          })
+        }
 
         setTimeout(() => {
-          window.location.href = result.redirect || "/questions"
-        }, 2000)
+          const topicId = typeof window !== "undefined" ? (window as any).topic?.id : null
+          
+          window.location.href = `/admin/questions/${topicId}`
+        }, 1500)
       } else {
         setSaveMessage(result.message)
       }
@@ -386,10 +497,46 @@ export function MathQuestionEditor() {
     }
   }
 
+  const areAllVariantsNonEmpty = () => {
+    return variants.every((variant) => variant.text.trim().length > 0)
+  }
+
+  const areAllVariantsUnique = () => {
+    const variantTexts = variants.map((v) => v.text.trim().toLowerCase()).filter((t) => t.length > 0)
+    const uniqueTexts = new Set(variantTexts)
+    return variantTexts.length === uniqueTexts.size
+  }
+
+  const getVariantValidationErrors = () => {
+    const errors = []
+    if (!areAllVariantsNonEmpty()) {
+      errors.push("Barcha variantlarni to'ldiring")
+    }
+    if (!areAllVariantsUnique()) {
+      errors.push("Barcha variantlar turlicha bo'lishi kerak")
+    }
+    return errors
+  }
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Savol yuklanmoqda...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Savol yaratish</h1>
+        <h1 className="text-2xl font-bold text-gray-800">
+          {mode === "edit" ? "Savolni tahrirlash" : "Savol yaratish"}
+        </h1>
         <div className="flex items-center space-x-4">
           {[1, 2].map((step) => (
             <div key={step} className="flex items-center">
@@ -572,8 +719,14 @@ export function MathQuestionEditor() {
                   </span>
                   <div className="flex-1">
                     <Textarea
+                      ref={(el) => {
+                        variantTextareaRefs.current[variant.id] = el
+                      }}
                       value={variant.text}
-                      onChange={(e) => updateVariantText(variant.id, e.target.value)}
+                      onChange={(e) => handleVariantTextareaChange(variant.id, e.target.value, e.target.selectionStart)}
+                      onSelect={(e) =>
+                        handleVariantTextareaClick(variant.id, (e.target as HTMLTextAreaElement).selectionStart)
+                      }
                       placeholder={`${String.fromCharCode(65 + index)} variantini kiriting...`}
                       rows={2}
                       className="w-full resize-none min-h-[80px] bg-white border-2 border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 rounded-lg"
@@ -626,9 +779,9 @@ export function MathQuestionEditor() {
                     </Button>
                   </div>
 
-                  {variant.formulas.length > 0 && (
+                  {getVariantFormulas(variant.text).length > 0 && (
                     <div className="flex flex-wrap gap-3">
-                      {variant.formulas.map((formula) => (
+                      {getVariantFormulas(variant.text).map((formula) => (
                         <div
                           key={formula.id}
                           className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-100 hover:border-blue-200 transition-colors"
@@ -646,7 +799,7 @@ export function MathQuestionEditor() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => deleteVariantFormula(variant.id, formula.id)}
+                            onClick={() => deleteVariantFormula(variant.id, formula)}
                             className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-100 rounded-md"
                             title="O'chirish"
                           >
@@ -658,24 +811,29 @@ export function MathQuestionEditor() {
                   )}
                 </div>
 
-                {(variant.text.trim() || variant.formulas.length > 0) && (
+                {variant.text.trim() && (
                   <div className="mt-4 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-lg border-2 border-gray-100">
                     <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                       <span className="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
                       Ko'rinishi:
                     </h4>
-                    <div className="prose max-w-none text-sm text-gray-800">
-                      {variant.text && <span className="inline-block">{variant.text}</span>}
-                      {variant.formulas.map((formula) => (
-                        <span key={formula.id} className="inline-block">
-                          <MathRenderer latex={formula.latex} />
-                        </span>
-                      ))}
-                    </div>
+                    <div className="prose max-w-none text-sm text-gray-800">{renderVariantContent(variant.text)}</div>
                   </div>
                 )}
               </div>
             ))}
+
+            <div className="space-y-2">
+              {getVariantValidationErrors().map((error, index) => (
+                <div key={index} className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-700 flex items-center gap-2">
+                    <span className="text-red-500">⚠️</span>
+                    {error}
+                  </p>
+                </div>
+              ))}
+            </div>
+
             <p className="text-sm text-gray-500">Kamida bitta variantni to'g'ri javob sifatida belgilang.</p>
           </CardContent>
         </Card>
@@ -709,7 +867,13 @@ export function MathQuestionEditor() {
               disabled={isSaving || !canProceedToNextStep()}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
             >
-              {isSaving ? "Saqlanmoqda..." : "Savolni saqlash"}
+              {isSaving
+                ? mode === "edit"
+                  ? "Saqlanmoqda..."
+                  : "Saqlanmoqda..."
+                : mode === "edit"
+                  ? "O'zgarishlarni saqlash"
+                  : "Savolni saqlash"}
             </Button>
           )}
         </div>
