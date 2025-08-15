@@ -37,263 +37,278 @@
 </head>
 
 <body>
-    <div class="wrapper">
-        <!-- Sidebar Overlay for Mobile -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+     {{-- @if(Auth::user()->role != \App\Models\User::ROLE_USER) --}}
+        <div class="wrapper">
+            <!-- Sidebar Overlay for Mobile -->
+            <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- Sidebar -->
-        <nav id="sidebar" class="sidebar" role="navigation" aria-label="Asosiy navigatsiya">
-            <div class="sidebar-header">
-                <div class="sidebar-brand">
-                    <i class="fas fa-graduation-cap brand-icon" aria-hidden="true"></i>
-                    <div class="brand-text">
-                        <h4 class="mb-0">Ta'lim Boshqaruvi</h4>
+            <!-- Sidebar -->
+            <nav id="sidebar" class="sidebar" role="navigation" aria-label="Asosiy navigatsiya">
+                <div class="sidebar-header">
+                    <div class="sidebar-brand">
+                        <i class="fas fa-graduation-cap brand-icon" aria-hidden="true"></i>
+                        <div class="brand-text">
+                            <h4 class="mb-0">Ta'lim Boshqaruvi</h4>
+                        </div>
                     </div>
-                </div>
-                <button type="button" id="sidebarCollapse" class="btn btn-outline-light btn-sm"
-                    aria-label="Yon panelni yig'ish/kengaytirish">
-                    <i class="fas fa-bars" aria-hidden="true"></i>
-                </button>
-            </div>
-
-            <div class="sidebar-menu">
-                <div class="menu-section">
-                    <h6 class="menu-title">NAVIGATSIYA</h6>
-                    <ul class="nav nav-pills nav-sidebar flex-column" role="menubar">
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.dashboard') }}"
-                                class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.dashboard') ? 'page' : 'false' }}">
-                                <i class="fas fa-home nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Boshqaruv Paneli</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.teachers.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.teachers*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.teachers*') ? 'page' : 'false' }}">
-                                <i class="fas fa-chalkboard-teacher nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">O'qituvchilar</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.students.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.students*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.students*') ? 'page' : 'false' }}">
-                                <i class="fas fa-user-graduate nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Talabalar</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.classes.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.classes*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.classes*') ? 'page' : 'false' }}">
-                                <i class="fas fa-school nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Sinflar</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.subjects.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.subjects*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.subjects*') ? 'page' : 'false' }}">
-                                <i class="fas fa-book nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Fanlar</span>
-                            </a>
-                        </li>
-                         <li class="nav-item" role="none">
-                            <a href="{{ route('admin.topics.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.topics*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.topics*') ? 'page' : 'false' }}">
-                                <i class="fas fa-tags nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Mavzular</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.questions.topic.list') }}"
-                                class="nav-link {{ request()->routeIs('admin.questions*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.questions*') ? 'page' : 'false' }}">
-                                <i class="fas fa-clipboard-list nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Vazifalar va Topshiriqlar</span>
-                            </a>
-                        </li>
-                        {{-- <li class="nav-item" role="none">
-                            <a href="{{ route('admin.grades') }}"
-                                class="nav-link {{ request()->routeIs('admin.grades*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.grades*') ? 'page' : 'false' }}">
-                                <i class="fas fa-chart-line nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Baholar</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.reports') }}"
-                                class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.reports*') ? 'page' : 'false' }}">
-                                <i class="fas fa-file-alt nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Hisobotlar</span>
-                            </a>
-                        </li> --}}
-                    </ul>
-                </div>
-
-                <div class="menu-section">
-                    <h6 class="menu-title">TIZIM</h6>
-                    <ul class="nav nav-pills nav-sidebar flex-column" role="menubar">
-                        {{-- <li class="nav-item" role="none">
-                            <a href="{{ route('admin.settings') }}" 
-                               class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"
-                               role="menuitem"
-                               aria-current="{{ request()->routeIs('admin.settings*') ? 'page' : 'false' }}">
-                                <i class="fas fa-cog nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Sozlamalar</span>
-                            </a>
-                        </li> --}}
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.users.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.users.*') ? 'page' : 'false' }}">
-                                <i class="fas fa-users nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Foydalanuvchilar</span>
-                            </a>
-                        </li>
-                        <li class="nav-item" role="none">
-                            <a href="{{ route('admin.roles.index') }}"
-                                class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
-                                role="menuitem"
-                                aria-current="{{ request()->routeIs('admin.roles.*') ? 'page' : 'false' }}">
-                                <i class="fas fa-user-tag nav-icon" aria-hidden="true"></i>
-                                <span class="nav-text">Rollar</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Page Content -->
-        <div id="content" class="content">
-            <!-- Top Navigation -->
-            <nav class="navbar navbar-expand-lg navbar-light topbar">
-                <div class="container-fluid">
-                    <button type="button" id="sidebarCollapseTop"
-                        class="btn btn-outline-primary btn-sm me-3 d-md-none" aria-label="Yon panelni ochish">
+                    <button type="button" id="sidebarCollapse" class="btn btn-outline-light btn-sm"
+                        aria-label="Yon panelni yig'ish/kengaytirish">
                         <i class="fas fa-bars" aria-hidden="true"></i>
                     </button>
+                </div>
 
-                    <h1 class="navbar-brand mb-0 h4">@yield('page-title', 'Boshqaruv Paneli')</h1>
+                <div class="sidebar-menu">
+                    <div class="menu-section">
+                        <h6 class="menu-title">NAVIGATSIYA</h6>
+                        <ul class="nav nav-pills nav-sidebar flex-column" role="menubar">
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.dashboard') }}"
+                                    class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.dashboard') ? 'page' : 'false' }}">
+                                    <i class="fas fa-home nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Boshqaruv Paneli</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.teachers.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.teachers*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.teachers*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-chalkboard-teacher nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">O'qituvchilar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.students.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.students*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.students*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-user-graduate nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Talabalar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.classes.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.classes*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.classes*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-school nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Sinflar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.subjects.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.subjects*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.subjects*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-book nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Fanlar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.topics.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.topics*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.topics*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-tags nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Mavzular</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.questions.topic.list') }}"
+                                    class="nav-link {{ request()->routeIs('admin.questions*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.questions*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-clipboard-list nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Vazifalar va Topshiriqlar</span>
+                                </a>
+                            </li>
+                            {{-- <li class="nav-item" role="none">
+                                <a href="{{ route('admin.grades') }}"
+                                    class="nav-link {{ request()->routeIs('admin.grades*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.grades*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-chart-line nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Baholar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.reports') }}"
+                                    class="nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.reports*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-file-alt nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Hisobotlar</span>
+                                </a>
+                            </li> --}}
+                        </ul>
+                    </div>
 
-                    <div class="navbar-nav ms-auto">
-                        <!-- Notifications -->
-                        <div class="nav-item dropdown me-3">
-                            <a class="nav-link position-relative" href="#" id="notificationDropdown"
-                                role="button" data-bs-toggle="dropdown" aria-expanded="false"
-                                aria-label="Bildirishnomalar">
-                                <i class="fas fa-bell fs-5" aria-hidden="true"></i>
-                                <span
-                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    3
-                                    <span class="visually-hidden">o'qilmagan bildirishnomalar</span>
-                                </span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                                <li>
-                                    <h6 class="dropdown-header">Bildirishnomalar</h6>
-                                </li>
-                                <li><a class="dropdown-item" href="#">Yangi talaba qo'shildi</a></li>
-                                <li><a class="dropdown-item" href="#">Vazifa topshirildi</a></li>
-                                <li><a class="dropdown-item" href="#">Tizim yangilandi</a></li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li><a class="dropdown-item text-center" href="#">Barchasini ko'rish</a></li>
-                            </ul>
-                        </div>
-
-                        <!-- User Profile -->
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle profile-dropdown d-flex align-items-center"
-                                href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
-                                aria-expanded="false" aria-label="Foydalanuvchi menyusi">
-                                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                                    class="rounded-circle me-2" width="32" height="32"
-                                    alt="Foydalanuvchi rasmi">
-                                <span class="d-none d-md-inline">{{ Auth::user()->name ?? 'Administrator' }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                                        <i class="fas fa-user me-2" aria-hidden="true"></i>Profil
-                                    </a>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>Chiqish
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="menu-section">
+                        <h6 class="menu-title">TIZIM</h6>
+                        <ul class="nav nav-pills nav-sidebar flex-column" role="menubar">
+                            {{-- <li class="nav-item" role="none">
+                                <a href="{{ route('admin.settings') }}" 
+                                class="nav-link {{ request()->routeIs('admin.settings*') ? 'active' : '' }}"
+                                role="menuitem"
+                                aria-current="{{ request()->routeIs('admin.settings*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-cog nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Sozlamalar</span>
+                                </a>
+                            </li> --}}
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.users.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.users.*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-users nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Foydalanuvchilar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.roles.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.roles.*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-user-tag nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Rollar</span>
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </nav>
 
-            <!-- Main Content Area -->
-            <main class="main-content" role="main">
-                <div class="container-fluid">
-                    <!-- Success Alert -->
-                    @if (session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                aria-label="Ogohlantirishni yopish"></button>
-                        </div>
-                    @endif
+            <!-- Page Content -->
+            <div id="content" class="content">
+                <!-- Top Navigation -->
+                <nav class="navbar navbar-expand-lg navbar-light topbar">
+                    <div class="container-fluid">
+                        <button type="button" id="sidebarCollapseTop"
+                            class="btn btn-outline-primary btn-sm me-3 d-md-none" aria-label="Yon panelni ochish">
+                            <i class="fas fa-bars" aria-hidden="true"></i>
+                        </button>
 
-                    <!-- Error Alert -->
-                    @if (session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
-                            {{ session('error') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                aria-label="Ogohlantirishni yopish"></button>
-                        </div>
-                    @endif
+                        <h1 class="navbar-brand mb-0 h4">@yield('page-title', 'Boshqaruv Paneli')</h1>
 
-                    <!-- Validation Errors -->
-                    @if ($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
-                            <strong>Xatoliklar mavjud:</strong>
-                            <ul class="mb-0 mt-2">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"
-                                aria-label="Ogohlantirishni yopish"></button>
-                        </div>
-                    @endif
+                        <div class="navbar-nav ms-auto">
+                            <!-- Notifications -->
+                            <div class="nav-item dropdown me-3">
+                                <a class="nav-link position-relative" href="#" id="notificationDropdown"
+                                    role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                    aria-label="Bildirishnomalar">
+                                    <i class="fas fa-bell fs-5" aria-hidden="true"></i>
+                                    <span
+                                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                        3
+                                        <span class="visually-hidden">o'qilmagan bildirishnomalar</span>
+                                    </span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                                    <li>
+                                        <h6 class="dropdown-header">Bildirishnomalar</h6>
+                                    </li>
+                                    <li><a class="dropdown-item" href="#">Yangi talaba qo'shildi</a></li>
+                                    <li><a class="dropdown-item" href="#">Vazifa topshirildi</a></li>
+                                    <li><a class="dropdown-item" href="#">Tizim yangilandi</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li><a class="dropdown-item text-center" href="#">Barchasini ko'rish</a></li>
+                                </ul>
+                            </div>
 
-                    @yield('content')
-                </div>
-            </main>
+                            <!-- User Profile -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle profile-dropdown d-flex align-items-center"
+                                    href="#" id="profileDropdown" role="button" data-bs-toggle="dropdown"
+                                    aria-expanded="false" aria-label="Foydalanuvchi menyusi">
+                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
+                                        class="rounded-circle me-2" width="32" height="32"
+                                        alt="Foydalanuvchi rasmi">
+                                    <span class="d-none d-md-inline">{{ Auth::user()->name ?? 'Administrator' }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                            <i class="fas fa-user me-2" aria-hidden="true"></i>Profil
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>Chiqish
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Main Content Area -->
+                <main class="main-content" role="main">
+                    <div class="container-fluid">
+                        <!-- Success Alert -->
+                        @if (session('success'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
+                                {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Ogohlantirishni yopish"></button>
+                            </div>
+                        @endif
+
+                        <!-- Error Alert -->
+                        @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                                {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Ogohlantirishni yopish"></button>
+                            </div>
+                        @endif
+
+                        <!-- Validation Errors -->
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                                <strong>Xatoliklar mavjud:</strong>
+                                <ul class="mb-0 mt-2">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"
+                                    aria-label="Ogohlantirishni yopish"></button>
+                            </div>
+                        @endif
+
+                        @yield('content')
+                    </div>
+                </main>
+            </div>
         </div>
-    </div>
+    {{-- @else
+        <!-- Unauthorized Access Message -->
+        <div class="section" role="main">
+            <div class="card">
+                <div class="card-body text-center">
+                        <span class="titleup text-danger">
+                            <i class="fa fa-exclamation-circle" aria-hidden="true"></i>&nbsp;
+                            {{ trans('app.You Are Not Authorized to Access This Page.') }}
+                        </span>
+                </div>
+            </div>
+        </div>
+    @endif --}}
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"

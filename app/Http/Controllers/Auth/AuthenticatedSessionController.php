@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,26 +23,19 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+   public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
+
         $request->session()->regenerate();
 
-        $user = $request->user();
+        $user = auth()->user();
 
-        // foydalanuvchi roli asosida yo'naltirish
-        if ($user->role_id === 1) {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role_id === 2) {
-            return redirect()->route('teacher.dashboard');
-        } elseif ($user->role_id === 3) {
-            return redirect()->route('student.dashboard');
+        if ($user->role === User::ROLE_USER) {
+            return redirect()->route('user.profile');
         }
 
-
-        // agar roli aniqlanmasa
-        Auth::logout();
-        return redirect('/login')->withErrors(['email' => 'Ruxsatsiz rol.']);
+        return redirect()->route('admin.dashboard');
     }
 
 

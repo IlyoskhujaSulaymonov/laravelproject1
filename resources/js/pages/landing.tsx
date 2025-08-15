@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import ReactDOM from 'react-dom/client';
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -38,8 +37,6 @@ import {
   Sparkles,
   Play,
   UserCheck,
-  Search,
-  Globe,
   Phone,
   Mail,
   MapPin,
@@ -52,7 +49,6 @@ import {
   FileText,
   HelpCircle,
   Settings,
-  ChevronRight,
   ExternalLink,
 } from "lucide-react"
 
@@ -127,170 +123,65 @@ export default function EducationLanding() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Enhanced Header with Navigation */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrollY > 50
-          ? "bg-white/95 backdrop-blur-md shadow-xl border-b border-gray-200/50"
-          : "bg-white/90 backdrop-blur-sm shadow-lg"
-          }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrollY > 50 ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200" : "bg-transparent"
+        }`}
       >
         <div className="container mx-auto px-4">
-          {/* Top Bar */}
-          <div className="flex flex-col lg:flex-row items-center justify-between py-3 text-sm border-b border-gray-200/30 dark:border-gray-700/30 bg-white dark:bg-gray-800 transition-colors duration-200">
-            {/* Contact Info */}
-            <div className="flex flex-wrap justify-center lg:justify-start items-center gap-4 lg:gap-6 text-gray-600 dark:text-gray-300">
-              <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" aria-hidden="true" />
-                <a
-                  href="tel:+998901234567"
-                  className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                  aria-label="Phone number"
-                >
-                  +998 (90) 123-45-67
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" aria-hidden="true" />
-                <a
-                  href="mailto:info@talimtizimi.uz"
-                  className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
-                  aria-label="Email address"
-                >
-                  info@talimtizimi.uz
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" aria-hidden="true" />
-                <span>24/7 AI Yordam</span>
-              </div>
-            </div>
-
-            {/* Language and Social Links */}
-            <div className="flex flex-wrap justify-center lg:justify-end items-center gap-4 lg:gap-6 mt-3 lg:mt-0">
-              <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-gray-600 dark:text-gray-300" aria-hidden="true" />
-                <select
-                  className="bg-transparent text-gray-600 dark:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 rounded-md"
-                  aria-label="Select language"
-                >
-                  <option>O'zbek</option>
-                  <option>Русский</option>
-                  <option>English</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-3">
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Facebook page"
-                >
-                  <Facebook className="h-4 w-4 text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 cursor-pointer transition-colors" />
-                </a>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram page"
-                >
-                  <Instagram className="h-4 w-4 text-pink-600 hover:text-pink-700 dark:text-pink-500 dark:hover:text-pink-400 cursor-pointer transition-colors" />
-                </a>
-                <a
-                  href="https://youtube.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="YouTube channel"
-                >
-                  <Youtube className="h-4 w-4 text-red-600 hover:text-red-700 dark:text-red-500 dark:hover:text-red-400 cursor-pointer transition-colors" />
-                </a>
-                <a
-                  href="https://linkedin.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="LinkedIn profile"
-                >
-                  <Linkedin className="h-4 w-4 text-blue-700 hover:text-blue-800 dark:text-blue-600 dark:hover:text-blue-500 cursor-pointer transition-colors" />
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all shadow-lg hover:shadow-xl"
-                  onClick={() => window.location.href = window.Laravel.loginUrl}
-                >
-                  Tizimga kirish
-                </button>
-              </div>
-            </div>
-          </div>
-
-
-          {/* Main Navigation */}
-          <div className="flex items-center justify-between py-4">
-            {/* Enhanced Logo */}
-            <div className="flex items-center space-x-4 cursor-pointer group" onClick={() => scrollToSection("home")}>
-              <div className="relative">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-3 rounded-xl transform group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-xl">
-                  <GraduationCap className="h-8 w-8 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <div className="flex items-center space-x-3">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
+                <GraduationCap className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                  AI ustoz
-                </h1>
-
+                <h1 className="text-2xl font-bold text-gray-900">Ta'lim Tizimi</h1>
+                <p className="text-xs text-gray-600 flex items-center">
+                  <Brain className="h-3 w-3 mr-1" />
+                  AI bilan bilim olish
+                </p>
               </div>
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center space-x-2">
+            <nav className="hidden lg:flex items-center space-x-8">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-300 font-medium relative group ${activeSection === item.id
-                    ? "text-blue-600 bg-blue-50 shadow-md"
-                    : "text-gray-700 hover:text-blue-600 hover:bg-blue-50/50"
-                    }`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+                    activeSection === item.id
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                      : scrollY > 50
+                        ? "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                        : "text-gray-700 hover:text-blue-600 hover:bg-white/20"
+                  }`}
                 >
                   <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                  {activeSection === item.id && (
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-blue-600 rounded-full"></div>
-                  )}
+                  <span className="font-medium">{item.label}</span>
                 </button>
               ))}
             </nav>
 
-            {/* Search and Action Buttons */}
-            <div className="hidden md:flex items-center space-x-4">
-              {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Qidirish..."
-                  className="pl-10 pr-4 py-2 w-48 bg-gray-50 border-gray-200 focus:bg-white focus:border-blue-300 transition-all"
-                />
-              </div>
-
-              {/* Status Badge */}
-              {/* <Badge
+            <div className="hidden lg:flex items-center space-x-4">
+              <Button
                 variant="outline"
-                className="animate-pulse bg-gradient-to-r from-green-100 to-emerald-100 border-green-300 text-green-700 px-3 py-1"
+                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
+                onClick={() => (window.location.href = "/login")}
               >
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                <span className="font-medium">Onlayn</span>
-              </Badge> */}
-
-              {/* CTA Buttons */}
-              <Button className="bg-gradient-to-r from-blue-600 text-white to-purple-600 hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all shadow-lg hover:shadow-xl">
-                <Rocket className="h-4 w-4 mr-2" />
-                Bepul Boshlash
+                Kirish
+              </Button>
+              <Button
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                onClick={() => (window.location.href = "/register")}
+              >
+                Ro'yxatdan o'tish
               </Button>
             </div>
 
             {/* Mobile Menu Button */}
             <button
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -299,42 +190,41 @@ export default function EducationLanding() {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="lg:hidden pb-4 border-t border-gray-200/30 animate-in slide-in-from-top-2">
-              {/* Mobile Search */}
-              <div className="relative mt-4 mb-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  type="text"
-                  placeholder="Qidirish..."
-                  className="pl-10 pr-4 py-2 w-full bg-gray-50 border-gray-200"
-                />
-              </div>
-
-              <nav className="flex flex-col space-y-2">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollToSection(item.id)}
-                    className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 ${activeSection === item.id ? "text-blue-600 bg-blue-50" : "text-gray-700 hover:bg-gray-50"
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg animate-in slide-in-from-top-4">
+              <div className="container mx-auto px-4 py-6">
+                <nav className="space-y-4">
+                  {navItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => scrollToSection(item.id)}
+                      className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-300 ${
+                        activeSection === item.id
+                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                          : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
                       }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    <span className="font-medium">{item.label}</span>
-                    <ChevronRight className="h-4 w-4 ml-auto" />
-                  </button>
-                ))}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.label}</span>
+                    </button>
+                  ))}
 
-                <div className="pt-4 border-t border-gray-200 space-y-3">
-                  <Button variant="outline" className="w-full bg-transparent">
-                    <Play className="h-4 w-4 mr-2" />
-                    Demo ko'rish
-                  </Button>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                    <Rocket className="h-4 w-4 mr-2" />
-                    Bepul Boshlash
-                  </Button>
-                </div>
-              </nav>
+                  <div className="pt-4 border-t border-gray-200 space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
+                      onClick={() => (window.location.href = "/login")}
+                    >
+                      Kirish
+                    </Button>
+                    <Button
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                      onClick={() => (window.location.href = "/register")}
+                    >
+                      Ro'yxatdan o'tish
+                    </Button>
+                  </div>
+                </nav>
+              </div>
             </div>
           )}
         </div>

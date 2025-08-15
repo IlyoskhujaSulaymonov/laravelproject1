@@ -57,7 +57,6 @@
                     <td>{{ $topic->title }}</td>
                     <td>{{ $topic->order }}</td>
                     <td>
-                        <a href="{{ route('admin.topics.show', $topic) }}" class="btn btn-sm btn-info">Ko'rish</a>
                         <a href="{{ route('admin.topics.edit', $topic) }}" class="btn btn-sm btn-warning">O'zgartirish</a>
                         <form action="{{ route('admin.topics.destroy', $topic) }}" method="POST" style="display:inline-block;">
                             @csrf
