@@ -13,40 +13,41 @@ use App\Http\Controllers\MainController;
 use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\PlanController;
 use App\Models\Question;
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');
-})->middleware(['auth']);
+})->middleware(['auth', 'role:admin,teacher']);
 
-Route::get('/admin/dashboard', [AdminDashboardController::class, 'dashboard']) ->middleware(['auth', 'verified'])
+Route::get('/admin/dashboard', [AdminDashboardController::class, 'dashboard']) ->middleware(['auth','role:admin,teacher'])
     ->name('admin.dashboard');
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
 Route::resource('teachers', TeacherController::class);
 });
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('students', StudentController::class);
 });
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('classes', SchoolClassController::class);
 });
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('topics', TopicController::class);
 });
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('subjects', SubjectController::class);
 });
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('tasks', TaskController::class);
 });
 
-Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::get('questions/topics/list', [QuestionController::class, 'topicList'])->name('questions.topic.list');
     Route::get('questions/{topic}', [QuestionController::class, 'index'])->name('questions.index');
     Route::get('questions/create/{topic}', [QuestionController::class, 'create'])->name('questions.create');
@@ -57,22 +58,28 @@ Route::prefix('admin')->middleware('auth')->name('admin.')->group(function () {
      Route::get('questions/show/{topic}/{question}', [QuestionController::class, 'show'])->name('questions.show');
 });
 
-Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('users', UserController::class);
 });
 
-Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('roles', RoleController::class);
 });
 
-Route::prefix('admin')->middleware(['auth'])->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('teachers', TeacherController::class);
 });
 
-Route::get('/dashboard', [MainController::class, 'dashboard'])->name('dashboard');
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+    Route::resource('plans', PlanController::class);
+});
+
+Route::put('/users/{user}/change-plan', [UserController::class, 'changePlan'])->name('admin.users.changePlan');
+
+// Route::get('/dashboard', [MainController::class, 'dashboard'])->name('dashboard');
 Route::get('admin/notifications/check', [MainController::class, 'notificationsCheck'])->name('notifications.check');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:admin,teacher'])->group(function () {
     Route::get('/teacher/dashboard', [TeacherController::class, 'dashboard'])->name('teacher.dashboard');
     Route::get('/teacher/files', [TeacherController::class, 'list'])->name('teacher.files');
     Route::get('/teacher/upload', [TeacherController::class, 'uploadForm'])->name('teacher.upload');

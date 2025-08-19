@@ -33,7 +33,21 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Get custom messages for validator errors in Uzbek.
+     *
+     * @return array
+     */
+    public function messages(): array
+    {
+        return [
+            'email.required' => 'Elektron pochta manzili majburiy.',
+            'email.email' => 'Iltimos, to‘g‘ri elektron pochta manzilini kiriting.',
+            'password.required' => 'Parol majburiy.',
+        ];
+    }
+
+    /**
+     * Attempt to authenticate the request's credentials with detailed error messages.
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -41,11 +55,21 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        $user = \App\Models\User::where('email', $this->input('email'))->first();
+
+        if (! $user) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Bunday elektron pochta manzili topilmadi.',
+            ]);
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'password' => 'Parol noto‘g‘ri.',
             ]);
         }
 

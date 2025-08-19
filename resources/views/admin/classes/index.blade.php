@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Sinflar')
+@section('page-title', 'Sinflar')
 
 @section('content')
 <div class="container py-4">

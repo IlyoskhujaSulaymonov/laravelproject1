@@ -8,8 +8,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\Role;
 use App\Models\Teacher;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -24,11 +25,12 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'role_id',
+        'role',
         'name',
         'email',
         'phone',
         'password',
+        'email_verified_at'
     ];
 
     /**
@@ -61,5 +63,55 @@ class User extends Authenticatable
     public function teacher()
     {
         return $this->hasOne(Teacher::class);
+    }
+
+    public function subscriptions()
+    {
+        return $this->hasMany(UserPlan::class);
+    }
+
+    public function currentPlan()
+    {
+        return $this->hasOne(UserPlan::class)
+            ->where('is_active', true);
+    }
+
+  public static function getRole($role = null)
+    {
+        $arr = [
+            self::ROLE_ADMIN => 'admin',
+            self::ROLE_USER => 'o\'quvchi',
+            self::ROLE_TEACHER => 'o\'qituvchi',
+        ];
+
+        if ($role === null) {
+            return $arr;
+        }
+
+        return $arr[$role];
+    }
+
+    public function getRoleNameAttribute()
+    {
+        return self::getRole($this->role);
+    }
+
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            // Only apply free plan to students
+            if ($user->role === self::ROLE_USER) {
+                $freePlan = Plan::where('slug', 'free')->first();
+
+                if ($freePlan) {
+                    $user->subscriptions()->create([
+                        'plan_id'   => $freePlan->id,
+                        'starts_at' => now(),
+                        'ends_at'   => null,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+        });
     }
 }

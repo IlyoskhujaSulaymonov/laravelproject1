@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Plan;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
@@ -12,8 +13,9 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::latest()->paginate(10);
-        return view('admin.users.index', compact('users'));
+        $users = User::with(['currentPlan.plan'])->latest()->paginate(10);
+        $plans = Plan::all();
+        return view('admin.users.index', compact('users','plans'));
     }
 
     public function create()
@@ -92,4 +94,26 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('admin.users.index')->with('success', 'Foydalanuvchi o‘chirildi.');
     }
+
+    public function changePlan(Request $request, User $user)
+{
+    $request->validate([
+        'plan_id' => 'required|exists:plans,id',
+    ]);
+
+    // Deactivate old plans
+    $user->subscriptions()->update(['is_active' => false]);
+
+    // Attach new plan
+    $plan = Plan::find($request->plan_id);
+
+    $user->subscriptions()->create([
+        'plan_id' => $plan->id,
+        'starts_at' => now(),
+        'ends_at' => now()->addDays($plan->duration),
+        'is_active' => true,
+    ]);
+
+    return redirect()->route('admin.users.index')->with('success', 'Foydalanuvchi rejasi yangilandi!');
+}
 }

@@ -175,6 +175,15 @@
                                     <span class="nav-text">Rollar</span>
                                 </a>
                             </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.plans.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.plans.*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.plans.*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-coins nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Tariflar</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>

@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import AIAssistant from "@/components/ai-assistant"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useAuth } from "@/hooks/use-auth"
 import {
   GraduationCap,
   BookOpen,
@@ -50,7 +51,10 @@ import {
   HelpCircle,
   Settings,
   ExternalLink,
+  User,
+  LogOut,
 } from "lucide-react"
+import AIAssistant from "@/components/ai-assistant"
 
 export default function EducationLanding() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
@@ -61,6 +65,8 @@ export default function EducationLanding() {
   const [testCount, setTestCount] = useState(0)
   const [accuracyCount, setAccuracyCount] = useState(0)
   const [email, setEmail] = useState("")
+
+  const { isLoggedIn, user, logout } = useAuth()
 
   // Animated counters
   useEffect(() => {
@@ -110,6 +116,15 @@ export default function EducationLanding() {
     setEmail("")
   }
 
+  const handleLogout = () => {
+    logout()
+    window.location.href = "/"
+  }
+
+  const handleProfileClick = () => {
+    window.location.href = "/user/profile"
+  }
+
   const navItems = [
     { id: "home", label: "Bosh sahifa", icon: GraduationCap },
     { id: "features", label: "AI Imkoniyatlar", icon: Brain },
@@ -120,23 +135,23 @@ export default function EducationLanding() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-background">
       {/* Enhanced Header with Navigation */}
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrollY > 50 ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200" : "bg-transparent"
+          scrollY > 50 ? "bg-card/95 backdrop-blur-md shadow-lg border-b border-border" : "bg-transparent"
         }`}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
-                <GraduationCap className="h-8 w-8 text-white" />
+              <div className="bg-primary p-2 rounded-xl">
+                <GraduationCap className="h-8 w-8 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Ta'lim Tizimi</h1>
-                <p className="text-xs text-gray-600 flex items-center">
+                <h1 className="text-2xl font-serif font-bold text-foreground">Ta'lim Tizimi</h1>
+                <p className="text-xs text-muted-foreground flex items-center">
                   <Brain className="h-3 w-3 mr-1" />
                   AI bilan bilim olish
                 </p>
@@ -151,10 +166,10 @@ export default function EducationLanding() {
                   onClick={() => scrollToSection(item.id)}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
                     activeSection === item.id
-                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                      ? "bg-primary text-primary-foreground shadow-lg"
                       : scrollY > 50
-                        ? "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
-                        : "text-gray-700 hover:text-blue-600 hover:bg-white/20"
+                        ? "text-foreground hover:text-primary hover:bg-muted"
+                        : "text-foreground hover:text-primary hover:bg-card/20"
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -164,24 +179,53 @@ export default function EducationLanding() {
             </nav>
 
             <div className="hidden lg:flex items-center space-x-4">
-              <Button
-                variant="outline"
-                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
-                onClick={() => (window.location.href = "/login")}
-              >
-                Kirish
-              </Button>
-              <Button
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                onClick={() => (window.location.href = "/register")}
-              >
-                Ro'yxatdan o'tish
-              </Button>
+              {isLoggedIn ? (
+                <div className="flex items-center space-x-4">
+                  <span className="text-foreground">Salom, {user?.name || "Foydalanuvchi"}!</span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
+                      >
+                        <User className="h-4 w-4 mr-2" />
+                        Profil
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleProfileClick}>
+                        <User className="h-4 w-4 mr-2" />
+                        Profilni ko'rish
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Chiqish
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
+                    onClick={() => (window.location.href = "/login")}
+                  >
+                    Kirish
+                  </Button>
+                  <Button
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                    onClick={() => (window.location.href = "/register")}
+                  >
+                    Ro'yxatdan o'tish
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
             <button
-              className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="lg:hidden p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -190,7 +234,7 @@ export default function EducationLanding() {
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg animate-in slide-in-from-top-4">
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-card/95 backdrop-blur-md border-b border-border shadow-lg animate-in slide-in-from-top-4">
               <div className="container mx-auto px-4 py-6">
                 <nav className="space-y-4">
                   {navItems.map((item) => (
@@ -199,8 +243,8 @@ export default function EducationLanding() {
                       onClick={() => scrollToSection(item.id)}
                       className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-300 ${
                         activeSection === item.id
-                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                          : "text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                          ? "bg-primary text-primary-foreground shadow-lg"
+                          : "text-foreground hover:text-primary hover:bg-muted"
                       }`}
                     >
                       <item.icon className="h-5 w-5" />
@@ -208,20 +252,44 @@ export default function EducationLanding() {
                     </button>
                   ))}
 
-                  <div className="pt-4 border-t border-gray-200 space-y-3">
-                    <Button
-                      variant="outline"
-                      className="w-full border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
-                      onClick={() => (window.location.href = "/login")}
-                    >
-                      Kirish
-                    </Button>
-                    <Button
-                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                      onClick={() => (window.location.href = "/register")}
-                    >
-                      Ro'yxatdan o'tish
-                    </Button>
+                  <div className="pt-4 border-t border-border space-y-3">
+                    {isLoggedIn ? (
+                      <div className="space-y-2">
+                        <div className="px-3 py-2 text-foreground">Salom, {user?.name || "Foydalanuvchi"}!</div>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
+                          onClick={handleProfileClick}
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          Profilni ko'rish
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
+                          onClick={handleLogout}
+                        >
+                          <LogOut className="h-4 w-4 mr-2" />
+                          Chiqish
+                        </Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Button
+                          variant="outline"
+                          className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
+                          onClick={() => (window.location.href = "/login")}
+                        >
+                          Kirish
+                        </Button>
+                        <Button
+                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                          onClick={() => (window.location.href = "/register")}
+                        >
+                          Ro'yxatdan o'tish
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </nav>
               </div>

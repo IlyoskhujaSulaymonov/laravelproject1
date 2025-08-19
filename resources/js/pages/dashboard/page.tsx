@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -55,6 +55,9 @@ interface UserData {
   avatar: string
   joinDate: string
   lastLogin: string
+  emailVerifiedAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export default function UserDashboard() {
@@ -66,23 +69,25 @@ export default function UserDashboard() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [dataLoading, setDataLoading] = useState(true)
 
-  // Mock user data
   const [userData, setUserData] = useState<UserData>({
-    id: "user123",
-    fullName: "Akmal Karimov",
-    email: "akmal@example.com",
-    phone: "+998 90 123 45 67",
-    city: "Toshkent",
-    dateOfBirth: "2000-05-15",
-    occupation: "Talaba",
+    id: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    city: "",
+    dateOfBirth: "",
+    occupation: "",
     educationLevel: "university",
     currentGrade: "",
-    subjects: ["Matematika", "Fizika", "Informatika"],
-    goals: ["OTM ga kirish", "Bilimni mustahkamlash"],
+    subjects: [],
+    goals: [],
     avatar: "/placeholder.svg?height=100&width=100",
-    joinDate: "2024-01-15",
-    lastLogin: "2024-12-08",
+    joinDate: "",
+    lastLogin: "",
+    createdAt: "",
+    updatedAt: "",
   })
 
   const [editData, setEditData] = useState({ ...userData })
@@ -92,14 +97,75 @@ export default function UserDashboard() {
     confirmPassword: "",
   })
 
-  // Mock statistics
+  const fetchUserData = async () => {
+    try {
+      setDataLoading(true)
+
+      // Get CSRF token first
+      await fetch("/sanctum/csrf-cookie", {
+        credentials: "include",
+      })
+
+      const response = await fetch("/user/profile", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+
+        const mappedUserData: UserData = {
+          id: data.user.id.toString(),
+          fullName: data.user.name || "",
+          email: data.user.email || "",
+          phone: data.user.phone || "",
+          city: data.user.city || "",
+          dateOfBirth: data.user.date_of_birth || "",
+          occupation: data.user.occupation || "",
+          educationLevel: data.user.education_level || "university",
+          currentGrade: data.user.current_grade || "",
+          subjects: data.user.subjects ? JSON.parse(data.user.subjects) : ["Matematika", "Fizika", "Informatika"],
+          goals: data.user.goals ? JSON.parse(data.user.goals) : ["OTM ga kirish", "Bilimni mustahkamlash"],
+          avatar: data.user.avatar || "/placeholder.svg?height=100&width=100",
+          joinDate: data.user.created_at ? new Date(data.user.created_at).toISOString().split("T")[0] : "",
+          lastLogin: data.user.last_login_at ? new Date(data.user.last_login_at).toISOString().split("T")[0] : "",
+          emailVerifiedAt: data.user.email_verified_at,
+          createdAt: data.user.created_at || "",
+          updatedAt: data.user.updated_at || "",
+        }
+
+        setUserData(mappedUserData)
+        setEditData(mappedUserData)
+      } else {
+        setError("Foydalanuvchi ma'lumotlarini yuklashda xatolik")
+      }
+    } catch (err) {
+      setError("Tarmoq xatosi yuz berdi")
+      console.error("Error fetching user data:", err)
+    } finally {
+      setDataLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchUserData()
+  }, [])
+
   const stats = {
-    testsCompleted: 45,
+    testsCompleted: 45, // This could come from your Laravel backend
     averageScore: 87,
     studyHours: 124,
     achievements: 12,
     currentStreak: 7,
     totalPoints: 2450,
+    accountAge: userData.createdAt
+      ? Math.floor((new Date().getTime() - new Date(userData.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+      : 0,
   }
 
   // Mock recent activities
@@ -144,6 +210,8 @@ export default function UserDashboard() {
           city: editData.city,
           date_of_birth: editData.dateOfBirth,
           occupation: editData.occupation,
+          subjects: JSON.stringify(editData.subjects),
+          goals: JSON.stringify(editData.goals),
         }),
       })
 
@@ -153,6 +221,7 @@ export default function UserDashboard() {
         setUserData({ ...editData })
         setIsEditing(false)
         setSuccess("Profil muvaffaqiyatli yangilandi!")
+        setTimeout(() => fetchUserData(), 1000)
       } else {
         setError(data.message || "Profilni yangilashda xatolik")
       }
@@ -222,12 +291,15 @@ export default function UserDashboard() {
   }
 
   const handleLogout = async () => {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content // Get token from meta
+
     try {
       await fetch("/logout", {
         method: "POST",
         headers: {
           Accept: "application/json",
           "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrfToken, // Add this!
         },
         credentials: "include",
       })
@@ -257,8 +329,11 @@ export default function UserDashboard() {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Xush kelibsiz, {userData.fullName.split(" ")[0]}!</h2>
+            <h2 className="text-3xl font-bold mb-2">
+              Xush kelibsiz, {userData.fullName ? userData.fullName.split(" ")[0] : "Foydalanuvchi"}!
+            </h2>
             <p className="text-blue-100 text-lg">Bugun ham yangi bilimlar olishga tayyormisiz?</p>
+            <p className="text-blue-200 text-sm mt-2">Hisob ochilgan: {stats.accountAge} kun oldin</p>
           </div>
           <div className="bg-white/20 p-4 rounded-full">
             <Brain className="h-12 w-12" />
@@ -266,68 +341,82 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="h-8 w-8 text-blue-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">{stats.testsCompleted}</div>
-            <div className="text-gray-600">Bajarilgan testlar</div>
-          </CardContent>
-        </Card>
+      {dataLoading ? (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6 text-center">
+                <div className="bg-gray-200 w-16 h-16 rounded-full mx-auto mb-4"></div>
+                <div className="bg-gray-200 h-8 w-16 mx-auto mb-2 rounded"></div>
+                <div className="bg-gray-200 h-4 w-24 mx-auto rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        // ... existing stats grid code ...
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6 text-center">
+              <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.testsCompleted}</div>
+              <div className="text-gray-600">Bajarilgan testlar</div>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Target className="h-8 w-8 text-green-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">{stats.averageScore}%</div>
-            <div className="text-gray-600">O'rtacha ball</div>
-          </CardContent>
-        </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6 text-center">
+              <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Target className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.averageScore}%</div>
+              <div className="text-gray-600">O'rtacha ball</div>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-8 w-8 text-purple-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">{stats.studyHours}</div>
-            <div className="text-gray-600">O'qish soatlari</div>
-          </CardContent>
-        </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6 text-center">
+              <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-8 w-8 text-purple-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.studyHours}</div>
+              <div className="text-gray-600">O'qish soatlari</div>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trophy className="h-8 w-8 text-yellow-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">{stats.achievements}</div>
-            <div className="text-gray-600">Yutuqlar</div>
-          </CardContent>
-        </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6 text-center">
+              <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="h-8 w-8 text-yellow-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.achievements}</div>
+              <div className="text-gray-600">Yutuqlar</div>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Zap className="h-8 w-8 text-orange-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">{stats.currentStreak}</div>
-            <div className="text-gray-600">Kunlik seriya</div>
-          </CardContent>
-        </Card>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6 text-center">
+              <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap className="h-8 w-8 text-orange-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.currentStreak}</div>
+              <div className="text-gray-600">Kunlik seriya</div>
+            </CardContent>
+          </Card>
 
-        <Card className="hover:shadow-lg transition-shadow">
-          <CardContent className="p-6 text-center">
-            <div className="bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Star className="h-8 w-8 text-pink-600" />
-            </div>
-            <div className="text-3xl font-bold text-gray-900 mb-2">{stats.totalPoints}</div>
-            <div className="text-gray-600">Umumiy ochko</div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-6 text-center">
+              <div className="bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="h-8 w-8 text-pink-600" />
+              </div>
+              <div className="text-3xl font-bold text-gray-900 mb-2">{stats.totalPoints}</div>
+              <div className="text-gray-600">Umumiy ochko</div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Recent Activities */}
       <Card>
@@ -368,186 +457,219 @@ export default function UserDashboard() {
 
   const renderProfile = () => (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Profil ma'lumotlari</CardTitle>
-              <CardDescription>Shaxsiy ma'lumotlaringizni boshqaring</CardDescription>
-            </div>
-            <Button
-              onClick={() => (isEditing ? setIsEditing(false) : setIsEditing(true))}
-              variant={isEditing ? "outline" : "default"}
-              className="flex items-center space-x-2"
-            >
-              {isEditing ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
-              <span>{isEditing ? "Bekor qilish" : "Tahrirlash"}</span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {success && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="text-green-700 text-sm">{success}</span>
-            </div>
-          )}
-
-          {/* Avatar Section */}
-          <div className="flex items-center space-x-6">
-            <div className="relative">
-              <img
-                src={userData.avatar || "/placeholder.svg"}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
-              />
-              {isEditing && (
-                <button className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
-                  <Camera className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            <div>
-              <h3 className="text-xl font-bold">{userData.fullName}</h3>
-              <p className="text-gray-600">{userData.email}</p>
-              <Badge className="mt-2 bg-blue-100 text-blue-800">{userData.educationLevel}</Badge>
-            </div>
-          </div>
-
-          {/* Profile Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">To'liq ism</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  value={isEditing ? editData.fullName : userData.fullName}
-                  onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
+      {dataLoading ? (
+        <Card>
+          <CardContent className="p-6 animate-pulse">
+            <div className="flex items-center space-x-6 mb-6">
+              <div className="w-24 h-24 bg-gray-200 rounded-full"></div>
+              <div className="space-y-2">
+                <div className="h-6 bg-gray-200 rounded w-48"></div>
+                <div className="h-4 bg-gray-200 rounded w-32"></div>
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  value={isEditing ? editData.email : userData.email}
-                  onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-24"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Profil ma'lumotlari</CardTitle>
+                <CardDescription>Shaxsiy ma'lumotlaringizni boshqaring</CardDescription>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Telefon</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  value={isEditing ? editData.phone : userData.phone}
-                  onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Shahar</label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  value={isEditing ? editData.city : userData.city}
-                  onChange={(e) => setEditData({ ...editData, city: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Tug'ilgan sana</label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="date"
-                  value={isEditing ? editData.dateOfBirth : userData.dateOfBirth}
-                  onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
-                  disabled={!isEditing}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Kasb</label>
-              <Input
-                value={isEditing ? editData.occupation : userData.occupation}
-                onChange={(e) => setEditData({ ...editData, occupation: e.target.value })}
-                disabled={!isEditing}
-              />
-            </div>
-          </div>
-
-          {/* Subjects and Goals */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-3 block">Qiziqish fanlaringiz</label>
-              <div className="flex flex-wrap gap-2">
-                {userData.subjects.map((subject, index) => (
-                  <Badge key={index} className="bg-blue-100 text-blue-800">
-                    {subject}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-3 block">Maqsadlaringiz</label>
-              <div className="flex flex-wrap gap-2">
-                {userData.goals.map((goal, index) => (
-                  <Badge key={index} className="bg-purple-100 text-purple-800">
-                    {goal}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {isEditing && (
-            <div className="flex items-center justify-end space-x-4 pt-6 border-t">
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                Bekor qilish
-              </Button>
               <Button
-                onClick={handleSaveProfile}
-                disabled={isLoading}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                onClick={() => (isEditing ? setIsEditing(false) : setIsEditing(true))}
+                variant={isEditing ? "outline" : "default"}
+                className="flex items-center space-x-2"
               >
-                {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Saqlanmoqda...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <Save className="h-4 w-4" />
-                    <span>Saqlash</span>
-                  </div>
-                )}
+                {isEditing ? <X className="h-4 w-4" /> : <Edit className="h-4 w-4" />}
+                <span>{isEditing ? "Bekor qilish" : "Tahrirlash"}</span>
               </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {success && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                <span className="text-green-700 text-sm">{success}</span>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-3">
+                <AlertCircle className="h-5 w-5 text-red-500" />
+                <span className="text-red-700 text-sm">{error}</span>
+              </div>
+            )}
+
+            {/* Avatar Section */}
+            <div className="flex items-center space-x-6">
+              <div className="relative">
+                <img
+                  src={userData.avatar || "/placeholder.svg"}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                />
+                {isEditing && (
+                  <button className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+                    <Camera className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">{userData.fullName || "Foydalanuvchi"}</h3>
+                <p className="text-gray-600">{userData.email}</p>
+                <Badge className="mt-2 bg-blue-100 text-blue-800">{userData.educationLevel}</Badge>
+                {userData.emailVerifiedAt && (
+                  <Badge className="mt-2 ml-2 bg-green-100 text-green-800">Email tasdiqlangan</Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Profile Form */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">To'liq ism</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    value={isEditing ? editData.fullName : userData.fullName}
+                    onChange={(e) => setEditData({ ...editData, fullName: e.target.value })}
+                    disabled={!isEditing}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    value={isEditing ? editData.email : userData.email}
+                    onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                    disabled={!isEditing}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Telefon</label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    value={isEditing ? editData.phone : userData.phone}
+                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                    disabled={!isEditing}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Shahar</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    value={isEditing ? editData.city : userData.city}
+                    onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+                    disabled={!isEditing}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Tug'ilgan sana</label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Input
+                    type="date"
+                    value={isEditing ? editData.dateOfBirth : userData.dateOfBirth}
+                    onChange={(e) => setEditData({ ...editData, dateOfBirth: e.target.value })}
+                    disabled={!isEditing}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Kasb</label>
+                <Input
+                  value={isEditing ? editData.occupation : userData.occupation}
+                  onChange={(e) => setEditData({ ...editData, occupation: e.target.value })}
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            {/* Subjects and Goals */}
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Qiziqish fanlaringiz</label>
+                <div className="flex flex-wrap gap-2">
+                  {userData.subjects.map((subject, index) => (
+                    <Badge key={index} className="bg-blue-100 text-blue-800">
+                      {subject}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Maqsadlaringiz</label>
+                <div className="flex flex-wrap gap-2">
+                  {userData.goals.map((goal, index) => (
+                    <Badge key={index} className="bg-purple-100 text-purple-800">
+                      {goal}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {isEditing && (
+              <div className="flex items-center justify-end space-x-4 pt-6 border-t">
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  Bekor qilish
+                </Button>
+                <Button
+                  onClick={handleSaveProfile}
+                  disabled={isLoading}
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Saqlanmoqda...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <Save className="h-4 w-4" />
+                      <span>Saqlash</span>
+                    </div>
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 
   const renderSecurity = () => (
     <div className="space-y-6">
+      {/* Account Security Info */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
@@ -668,15 +790,27 @@ export default function UserDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+          <div
+            className={`flex items-center justify-between p-4 rounded-lg ${
+              userData.emailVerifiedAt ? "bg-green-50" : "bg-yellow-50"
+            }`}
+          >
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <CheckCircle className={`h-5 w-5 ${userData.emailVerifiedAt ? "text-green-600" : "text-yellow-600"}`} />
               <div>
-                <h4 className="font-semibold text-green-800">Email tasdiqlangan</h4>
-                <p className="text-sm text-green-600">{userData.email}</p>
+                <h4 className={`font-semibold ${userData.emailVerifiedAt ? "text-green-800" : "text-yellow-800"}`}>
+                  {userData.emailVerifiedAt ? "Email tasdiqlangan" : "Email tasdiqlanmagan"}
+                </h4>
+                <p className={`text-sm ${userData.emailVerifiedAt ? "text-green-600" : "text-yellow-600"}`}>
+                  {userData.email}
+                </p>
               </div>
             </div>
-            <Badge className="bg-green-100 text-green-800">Faol</Badge>
+            <Badge
+              className={userData.emailVerifiedAt ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}
+            >
+              {userData.emailVerifiedAt ? "Faol" : "Kutilmoqda"}
+            </Badge>
           </div>
 
           <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
@@ -684,11 +818,11 @@ export default function UserDashboard() {
               <Smartphone className="h-5 w-5 text-blue-600" />
               <div>
                 <h4 className="font-semibold text-blue-800">Telefon raqam</h4>
-                <p className="text-sm text-blue-600">{userData.phone}</p>
+                <p className="text-sm text-blue-600">{userData.phone || "Kiritilmagan"}</p>
               </div>
             </div>
             <Button variant="outline" size="sm">
-              Tasdiqlash
+              {userData.phone ? "Tasdiqlash" : "Qo'shish"}
             </Button>
           </div>
 
@@ -697,7 +831,17 @@ export default function UserDashboard() {
               <Clock className="h-5 w-5 text-gray-600" />
               <div>
                 <h4 className="font-semibold text-gray-800">Oxirgi kirish</h4>
-                <p className="text-sm text-gray-600">{userData.lastLogin}</p>
+                <p className="text-sm text-gray-600">{userData.lastLogin || "Ma'lumot yo'q"}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-5 w-5 text-gray-600" />
+              <div>
+                <h4 className="font-semibold text-gray-800">Hisob yaratilgan</h4>
+                <p className="text-sm text-gray-600">{userData.joinDate || "Ma'lumot yo'q"}</p>
               </div>
             </div>
           </div>
@@ -771,6 +915,7 @@ export default function UserDashboard() {
             </div>
 
             <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600 hidden md:block">{userData.fullName || "Foydalanuvchi"}</span>
               <Button variant="ghost" size="sm">
                 <Bell className="h-5 w-5" />
               </Button>

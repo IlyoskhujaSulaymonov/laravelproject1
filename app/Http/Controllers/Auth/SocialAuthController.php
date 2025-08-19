@@ -24,12 +24,19 @@ class SocialAuthController extends Controller
             [
                 'name' => $googleUser->getName(),
                 'password' => bcrypt(Str::random(16)),
+                'email_verified_at' => now(), // mark as verified
             ]
         );
 
+        // If user already exists but not verified, mark them verified
+        if (is_null($user->email_verified_at)) {
+            $user->update(['email_verified_at' => now()]);
+        }
+
         Auth::login($user, true);
 
-        return redirect()->route('user.profile')->with('success', 'Successfully logged in with Google!');
+        return redirect()->route('user.profile')
+            ->with('success', 'Successfully logged in with Google!');
     }
 
     public function redirectFacebook()

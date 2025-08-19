@@ -37,7 +37,7 @@
         <div class="bg-white/80 backdrop-blur-sm shadow-2xl border-0 rounded-xl p-6">
             <div class="text-center pb-4">
                 <h2 class="text-2xl font-bold text-gray-900">Hisobingizga kirish</h2>
-                <p class="text-gray-600">Email va parolingizni kiriting yoki ijtimoiy tarmoq orqali kiring</p>
+                <p class="text-gray-600">Email yoki ijtimoiy tarmoqlar orqali kiring</p>
             </div>
 
             {{-- Error Message --}}
@@ -51,6 +51,18 @@
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                     </svg>
                     <span class="text-red-700 text-sm">{{ session('error') }}</span>
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start space-x-3 mb-6">
+                    {{-- Alert Circle --}}
+                    <i class="fa fa-exclamation-triangle text-red-500 h-5 w-5"></i>
+                    <ul class="text-red-700 text-sm pl-3">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
@@ -75,8 +87,7 @@
                 {{-- Remember + Forgot --}}
                 <div class="flex items-center justify-between">
                     <label class="flex items-center space-x-2">
-                        <input type="checkbox" name="remember" class="rounded border-gray-300">
-                        <span class="text-sm text-gray-600">Meni eslab qol</span>
+                       
                     </label>
                     <a href="{{ route('password.request') }}" class="text-blue-600 hover:text-blue-700 text-sm">
                         Parolni unutdingizmi?
