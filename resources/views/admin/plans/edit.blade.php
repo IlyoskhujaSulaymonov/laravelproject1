@@ -20,6 +20,18 @@
             <label>Davomiyligi (kunlarda)</label>
             <input type="number" name="duration" class="form-control" value="{{ $plan->duration }}" required>
         </div>
+          <div class="mb-3">
+            <label>Testlar soni</label>
+            <input type="number" name="assessments_limit" class="form-control" value="{{ $plan->assessments_limit }}" required>
+        </div>
+         <div class="mb-3">
+            <label>Darslar soni</label>
+            <input type="number" name="lessons_limit" class="form-control" value="{{ $plan->lessons_limit }}" required>
+        </div>
+         <div class="mb-3">
+            <label>AI yordamlar soni</label>
+            <input type="number" name="ai_hints_limit" class="form-control" value="{{ $plan->ai_hints_limit }}" required>
+        </div>
         <div class="mb-3">
             <label>Tasnifi</label>
             <textarea name="description" class="form-control">{{ $plan->description }}</textarea>

@@ -26,6 +26,9 @@ class PlanController extends Controller
             'price' => 'required|numeric|min:0',
             'duration' => 'required|integer|min:0',
             'description' => 'nullable|string',
+            'lessons_limit' => 'required|integer|min:0',
+            'assessments_limit' => 'required|integer|min:0',
+            'ai_hints_limit' => 'required|integer|min:0',
             'features' => 'nullable|array',
             'features.*' => 'string|max:255',
         ]);
@@ -34,6 +37,9 @@ class PlanController extends Controller
             'name' => $data['name'],
             'price' => $data['price'],
             'duration' => $data['duration'],
+            'assessments_limit' => $data['assessments_limit'],
+            'lessons_limit' => $data['lessons_limit'],
+            'ai_hints_limit' => $data['ai_hints_limit'],
             'description' => $data['description'] ?? null,
             'features' => $data['features'] ?? [],
         ]);
@@ -53,6 +59,9 @@ class PlanController extends Controller
             'price' => 'required|numeric|min:0',
             'duration' => 'required|integer|min:0',
             'description' => 'nullable|string',
+             'lessons_limit' => 'required|integer|min:0',
+            'assessments_limit' => 'required|integer|min:0',
+            'ai_hints_limit' => 'required|integer|min:0',
             'features' => 'nullable|array',
             'features.*' => 'string|max:255',
         ]);
@@ -61,6 +70,9 @@ class PlanController extends Controller
             'name' => $data['name'],
             'price' => $data['price'],
             'duration' => $data['duration'],
+            'assessments_limit' => $data['assessments_limit'],
+            'lessons_limit' => $data['lessons_limit'],
+            'ai_hints_limit' => $data['ai_hints_limit'],
             'description' => $data['description'] ?? null,
             'features' => $data['features'] ?? [],
         ]);

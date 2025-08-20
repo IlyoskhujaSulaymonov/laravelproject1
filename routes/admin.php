@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\TopicController;
 use App\Http\Controllers\AdminDashboardController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\StudentDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PlanController;
+use App\Http\Controllers\Admin\UserPlanController;
 use App\Models\Question;
 
 Route::get('/admin', function () {
@@ -74,7 +76,14 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
     Route::resource('plans', PlanController::class);
 });
 
-Route::put('/users/{user}/change-plan', [UserController::class, 'changePlan'])->name('admin.users.changePlan');
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->group(function () {
+    Route::resource('user_plans', UserPlanController::class);
+});
+
+Route::prefix('admin')->middleware(['auth','role:admin'])->name('admin.')->group(function () {
+    Route::resource('payments', PaymentController::class);
+});
+
 
 // Route::get('/dashboard', [MainController::class, 'dashboard'])->name('dashboard');
 Route::get('admin/notifications/check', [MainController::class, 'notificationsCheck'])->name('notifications.check');

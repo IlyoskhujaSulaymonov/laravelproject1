@@ -11,7 +11,7 @@ class Plan extends Model
 {
     use SoftDeletes;
    protected $fillable = [
-        'name', 'slug', 'price', 'duration', 'description', 'features'
+        'name', 'slug', 'price', 'duration', 'description', 'features','assessments_limit', 'lessons_limit', 'ai_hints_limit', 'subjects_limit'
     ];
 
     protected $casts = [

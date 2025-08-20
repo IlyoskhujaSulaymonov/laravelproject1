@@ -14,6 +14,18 @@
             <input type="number" step="0.01" name="price" class="form-control" required>
         </div>
         <div class="mb-3">
+            <label>Testlar soni</label>
+            <input type="number" name="assessments_limit" class="form-control" required>
+        </div>
+         <div class="mb-3">
+            <label>Darslar soni</label>
+            <input type="number" name="lessons_limit" class="form-control" required>
+        </div>
+         <div class="mb-3">
+            <label>AI yordamlar soni</label>
+            <input type="number" name="ai_hints_limit" class="form-control" required>
+        </div>
+        <div class="mb-3">
             <label>Davomiyligi (kunlarda)</label>
             <input type="number" name="duration" class="form-control" required>
         </div>

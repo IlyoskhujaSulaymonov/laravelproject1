@@ -17,6 +17,9 @@
                 <th>Nomi</th>
                 <th>Narxi (so'm)</th>
                 <th>Muddati</th>
+                <th>Testlar cheklovi</th>
+                <th>Darslar cheklovi</th>
+                <th>AI maslahatlar cheklovi</th>
                 <th>Xususiyatlar</th>
                 <th>Amallar</th>
             </tr>
@@ -27,7 +30,10 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $plan->name }}</td>
                     <td>{{ $plan->price }}</td>
-                    <td>{{ $plan->duration }} days</td>
+                    <td>@if($plan->duration) {{ $plan->duration }} days @else cheksiz @endif</td>
+                    <td>{{ $plan->assessments_limit }}</td>
+                     <td>{{ $plan->lessons_limit }}</td>
+                      <td>{{ $plan->ai_hints_limit }}</td>
                     <td>
                         @if($plan->features)
                             <ul>

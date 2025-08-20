@@ -76,6 +76,17 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('is_active', true);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function getBalanceAttribute()
+    {
+        return $this->payments()->where('payment_purpose','income')->sum('amount') -
+         $this->payments()->where('payment_purpose','expense')->sum('amount');
+    }
+
   public static function getRole($role = null)
     {
         $arr = [

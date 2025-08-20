@@ -184,6 +184,15 @@
                                     <span class="nav-text">Tariflar</span>
                                 </a>
                             </li>
+                             <li class="nav-item" role="none">
+                                <a href="{{ route('admin.payments.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.payments.*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-dollar nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">To'lovlar</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
