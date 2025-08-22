@@ -3,46 +3,107 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\PasswordChangeRequest;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    public function profile(Request $request): View
+
+    public function profile(Request $request)
     {
-        return view('profile.profile', [
-            'user' => $request->user(),
-        ]);
+        $user = Auth::user();
+
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => "Foydalanuvchi topilmadi",
+        ], 401);
     }
-    /**
-     * Display the user's profile form.
-     */
-    public function edit(Request $request): View
-    {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => "Foydalanuvchi profili",
+        'data'    => new UserResource($user->load(['userData.region', 'userData', 'currentPlan.plan'])), // Eager load
+    ]);
     }
 
     /**
      * Update the user's profile information.
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileUpdateRequest $request)
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        
+        // Update users table
+        $user->fill($request->only(['name', 'email', 'phone']));
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        // Handle avatar file upload
+        if ($request->hasFile('avatar')) {
+            $path = $request->file('avatar')->store('images/avatars', 'public');
+            $user->avatar = $path;
+        }
+
+        $user->save();
+         
+        // Update or create user_data table
+        // The UserData model will automatically handle JSON casting for subjects and goals
+        $user->userData()->updateOrCreate(
+            ['user_id' => $user->id],
+            $request->only([
+                'region_id',
+                'date_of_birth',
+                'occupation',
+                'education_level',
+                'current_grade',
+                'subjects',
+                'goals',
+            ])
+        );
+
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Profil muvaffaqiyatli yangilandi!',
+                'data' => new UserResource($user->load(['userData.region', 'userData', 'currentPlan.plan']))
+            ]);
+        }
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
+    /**
+     * Update the user's password.
+     */
+    public function updatePassword(PasswordChangeRequest $request)
+    {
+        $user = $request->user();
+        
+        // Update the user's password
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Parol muvaffaqiyatli o\'zgartirildi!'
+            ]);
+        }
+
+        return Redirect::route('profile.edit')->with('status', 'password-updated');
+    }
     /**
      * Delete the user's account.
      */

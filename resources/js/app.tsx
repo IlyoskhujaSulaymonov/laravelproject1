@@ -5,7 +5,7 @@ import Question from "./pages/question"
 import QuestionEdit from "./pages/question-edit" // Added import for edit page
 import QuestionView from "./pages/question-view" // Added import for view page
 import Landing from "./pages/landing"
-import Profile from "./pages/dashboard/page" // Added import for profile page
+import Dashboard from "./pages/dashboard/page" // Added import for profile page
 
 const el = document.getElementById("app")
 const page = el?.getAttribute("data-page")
@@ -17,7 +17,7 @@ if (el) {
       {page === "question" && <Question />}
       {page === "question-edit" && <QuestionEdit />} {/* Added routing for edit page */}
       {page === "question-view" && <QuestionView />} {/* Added routing for view page */}
-      {page === "profile" && <Profile />} {/* Added routing for login page */}
+      {page === "dashboard" && <Dashboard />} {/* Added routing for login page */}
     </React.StrictMode>,
   )
 }

@@ -50,6 +50,7 @@ class Kernel extends HttpKernel
 
         'api' => [
             // limits API requests (60 per minute by default)
+            \App\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],

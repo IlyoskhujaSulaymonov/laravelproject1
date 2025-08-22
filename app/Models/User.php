@@ -29,6 +29,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'phone',
+        'avatar',
         'password',
         'email_verified_at'
     ];
@@ -59,6 +60,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function userData()
+    {
+        return $this->hasOne(UserData::class);
     }
     public function teacher()
     {

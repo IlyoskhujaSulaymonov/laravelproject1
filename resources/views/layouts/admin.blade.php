@@ -248,11 +248,11 @@
                                     <span class="d-none d-md-inline">{{ Auth::user()->name ?? 'Administrator' }}</span>
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                    <li>
+                                    {{-- <li>
                                         <a class="dropdown-item" href="{{ route('profile.edit') }}">
                                             <i class="fas fa-user me-2" aria-hidden="true"></i>Profil
                                         </a>
-                                    </li>
+                                    </li> --}}
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
