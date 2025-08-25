@@ -65,8 +65,9 @@ export default function EducationLanding() {
   const [testCount, setTestCount] = useState(0)
   const [accuracyCount, setAccuracyCount] = useState(0)
   const [email, setEmail] = useState("")
+  const [showUserMenu, setShowUserMenu] = useState(false)
 
-  const { isLoggedIn, user, logout } = useAuth()
+  const { isLoggedIn, user, loading, logout } = useAuth()
 
   // Animated counters
   useEffect(() => {
@@ -96,6 +97,20 @@ export default function EducationLanding() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest('[data-dropdown]')) {
+        setShowUserMenu(false)
+        setIsMenuOpen(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section)
   }
@@ -116,13 +131,25 @@ export default function EducationLanding() {
     setEmail("")
   }
 
-  const handleLogout = () => {
-    logout()
-    window.location.href = "/"
-  }
+  const handleLogout = async () => {
+    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
+    const csrfToken = csrfTokenElement?.content || ''
 
-  const handleProfileClick = () => {
-    window.location.href = "/user/profile"
+    try {
+      await fetch("/logout", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrfToken,
+        },
+        credentials: "include",
+      })
+    } catch (err) {
+      console.error("Logout error:", err)
+    } finally {
+      window.location.href = "/"
+    }
   }
 
   const navItems = [
@@ -144,33 +171,37 @@ export default function EducationLanding() {
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="bg-primary p-2 rounded-xl">
-                <GraduationCap className="h-8 w-8 text-primary-foreground" />
+            {/* Enhanced Logo with Hover Animations */}
+            <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => scrollToSection('home')}>
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
+                <GraduationCap className="h-8 w-8 text-white group-hover:animate-pulse" />
               </div>
               <div>
-                <h1 className="text-2xl font-serif font-bold text-foreground">Ta'lim Tizimi</h1>
-                <p className="text-xs text-muted-foreground flex items-center">
-                  <Brain className="h-3 w-3 mr-1" />
+                <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-blue-600 transition-all duration-300">Ta'lim Tizimi</h1>
+                <p className="text-xs text-muted-foreground flex items-center group-hover:text-blue-600 transition-colors duration-300">
+                  <Brain className="h-3 w-3 mr-1 group-hover:animate-spin" />
                   AI bilan bilim olish
                 </p>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation with Enhanced Animations */}
             <nav className="hidden lg:flex items-center space-x-8">
-              {navItems.map((item) => (
+              {navItems.map((item, index) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 ${
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${
                     activeSection === item.id
-                      ? "bg-primary text-primary-foreground shadow-lg"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105"
                       : scrollY > 50
-                        ? "text-foreground hover:text-primary hover:bg-muted"
-                        : "text-foreground hover:text-primary hover:bg-card/20"
+                        ? "text-foreground hover:text-primary hover:bg-muted hover:shadow-md"
+                        : "text-foreground hover:text-primary hover:bg-card/20 hover:shadow-md"
                   }`}
+                  style={{
+                    animationDelay: `${index * 100}ms`,
+                    animation: 'fadeInUp 0.6s ease-out forwards'
+                  }}
                 >
                   <item.icon className="h-4 w-4" />
                   <span className="font-medium">{item.label}</span>
@@ -179,27 +210,42 @@ export default function EducationLanding() {
             </nav>
 
             <div className="hidden lg:flex items-center space-x-4">
-              {isLoggedIn ? (
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm text-muted-foreground">Yuklanmoqda...</span>
+                </div>
+              ) : isLoggedIn ? (
                 <div className="flex items-center space-x-4">
-                  <span className="text-foreground">Salom, {user?.name || "Foydalanuvchi"}!</span>
-                  <DropdownMenu>
+                  <DropdownMenu open={showUserMenu} onOpenChange={setShowUserMenu}>
                     <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Profil
-                      </Button>
+                      <div data-dropdown>
+                        <Button
+                          variant="outline"
+                          className="border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent shadow-lg hover:shadow-xl"
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          {user?.name || "Profil"}
+                          <ChevronDown className="h-4 w-4 ml-2" />
+                        </Button>
+                      </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={handleProfileClick}>
-                        <User className="h-4 w-4 mr-2" />
-                        Profilni ko'rish
+                    <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-md border border-gray-200 shadow-xl">
+                      <DropdownMenuItem className="hover:bg-blue-50 cursor-pointer">
+                        <a href="/user/dashboard" className="flex items-center w-full">
+                          <BarChart3 className="h-4 w-4 mr-2 text-blue-600" />
+                          <span className="font-medium">Dashboard</span>
+                        </a>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleLogout}>
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Chiqish
+                      <DropdownMenuItem className="hover:bg-green-50 cursor-pointer">
+                        <a href="/user/profile" className="flex items-center w-full">
+                          <User className="h-4 w-4 mr-2 text-green-600" />
+                          <span className="font-medium">Profil</span>
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout} className="hover:bg-red-50 cursor-pointer border-t border-gray-100 mt-1">
+                        <LogOut className="h-4 w-4 mr-2 text-red-600" />
+                        <span className="font-medium text-red-600">Chiqish</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -232,20 +278,24 @@ export default function EducationLanding() {
             </button>
           </div>
 
-          {/* Mobile Navigation */}
+          {/* Enhanced Mobile Navigation */}
           {isMenuOpen && (
-            <div className="lg:hidden absolute top-full left-0 right-0 bg-card/95 backdrop-blur-md border-b border-border shadow-lg animate-in slide-in-from-top-4">
+            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-border shadow-xl animate-in slide-in-from-top-4 duration-300">
               <div className="container mx-auto px-4 py-6">
                 <nav className="space-y-4">
-                  {navItems.map((item) => (
+                  {navItems.map((item, index) => (
                     <button
                       key={item.id}
                       onClick={() => scrollToSection(item.id)}
-                      className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-300 ${
+                      className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-300 transform hover:scale-102 ${
                         activeSection === item.id
-                          ? "bg-primary text-primary-foreground shadow-lg"
-                          : "text-foreground hover:text-primary hover:bg-muted"
+                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
+                          : "text-foreground hover:text-primary hover:bg-muted hover:shadow-md"
                       }`}
+                      style={{
+                        animationDelay: `${index * 50}ms`,
+                        animation: 'slideInLeft 0.4s ease-out forwards'
+                      }}
                     >
                       <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.label}</span>
@@ -253,16 +303,36 @@ export default function EducationLanding() {
                   ))}
 
                   <div className="pt-4 border-t border-border space-y-3">
-                    {isLoggedIn ? (
-                      <div className="space-y-2">
-                        <div className="px-3 py-2 text-foreground">Salom, {user?.name || "Foydalanuvchi"}!</div>
+                    {loading ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        <span className="ml-2 text-sm text-muted-foreground">Yuklanmoqda...</span>
+                      </div>
+                    ) : isLoggedIn ? (
+                      <div className="space-y-3">
+                        <div className="text-center py-2">
+                          <p className="text-sm font-medium text-gray-700">{user?.name || "Foydalanuvchi"}</p>
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
+                          asChild
+                        >
+                          <a href="/user/dashboard">
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Dashboard
+                          </a>
+                        </Button>
                         <Button
                           variant="outline"
                           className="w-full justify-start border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
-                          onClick={handleProfileClick}
+                          asChild
                         >
-                          <User className="h-4 w-4 mr-2" />
-                          Profilni ko'rish
+                          <a href="/user/profile">
+                            <User className="h-4 w-4 mr-2" />
+                            Profil
+                          </a>
                         </Button>
                         <Button
                           variant="outline"

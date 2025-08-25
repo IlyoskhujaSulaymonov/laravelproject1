@@ -6,6 +6,7 @@ import QuestionEdit from "./pages/question-edit" // Added import for edit page
 import QuestionView from "./pages/question-view" // Added import for view page
 import Landing from "./pages/landing"
 import Dashboard from "./pages/dashboard/page" // Added import for profile page
+import "./learning-app" // Import learning app initialization
 
 const el = document.getElementById("app")
 const page = el?.getAttribute("data-page")

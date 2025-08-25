@@ -3,11 +3,12 @@
 import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "../../components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
+import { Input } from "../../components/ui/input"
+import { Badge } from "../../components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
+import TestComponent from "../../components/TestComponent"
 import {
   GraduationCap,
   Brain,
@@ -45,6 +46,18 @@ import {
   Search,
   Menu,
   ChevronDown,
+  PlayCircle,
+  PauseCircle,
+  RotateCcw,
+  Award,
+  Timer,
+  FileText,
+  TrendingDown,
+  Activity,
+  Filter,
+  SortAsc,
+  Calendar as CalendarIcon,
+  ExternalLink
 } from "lucide-react"
 
 interface UserPlan {
@@ -110,7 +123,7 @@ export default function UserDashboard() {
     currentGrade: "",
     subjects: [],
     goals: [],
-    avatar: "/professional-avatar.png",
+    avatar: "",
     joinDate: "",
     lastLogin: "",
     createdAt: "",
@@ -133,6 +146,12 @@ export default function UserDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [notificationCount, setNotificationCount] = useState(3)
+
+  // Test completion callback for the TestComponent
+  const handleTestComplete = (result: any) => {
+    console.log('Test completed:', result)
+    // Additional logic can be added here if needed
+  }
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -454,6 +473,8 @@ export default function UserDashboard() {
     fetchUserData()
   }, [])
 
+
+
   // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -611,6 +632,10 @@ export default function UserDashboard() {
       window.location.href = "/"
     }
   }
+
+
+
+  // renderTests function removed - now using TestComponent
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -936,8 +961,8 @@ export default function UserDashboard() {
                         ? editData.avatar
                         : editData.avatar
                         ? `/storage/${editData.avatar}`
-                        : "/placeholder.svg"
-                      : "/placeholder.svg"
+                        : "/images/avatars/avatar.svg"
+                      : "/images/avatars/avatar.svg"
                   }
                   alt="Profile"
                   className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
@@ -1440,13 +1465,7 @@ export default function UserDashboard() {
           </div>
         )
       case "tests":
-        return (
-          <div className="text-center py-12">
-            <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">Testlar bo'limi</h3>
-            <p className="text-gray-500">Tez orada...</p>
-          </div>
-        )
+        return <TestComponent onTestComplete={handleTestComplete} />
       case "achievements":
         return (
           <div className="text-center py-12">
@@ -1467,6 +1486,8 @@ export default function UserDashboard() {
         return renderOverview()
     }
   }
+
+  // renderTests function removed - now using TestComponent
 
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digits
@@ -1719,11 +1740,11 @@ export default function UserDashboard() {
                   <div className="relative">
                     <img
                       src={
-                        userData.avatar
+                        userData.avatar && typeof userData.avatar === 'string'
                           ? userData.avatar.startsWith('http') || userData.avatar.startsWith('/storage')
                             ? userData.avatar
                             : `/storage/${userData.avatar}`
-                          : "/placeholder.svg"
+                          : "/images/avatars/avatar.svg"
                       }
                       alt="Profile"
                       className="w-9 h-9 rounded-xl object-cover border-2 border-white shadow-md"
@@ -1745,7 +1766,7 @@ export default function UserDashboard() {
                         <div className="relative">
                           <img
                             src={
-                              userData.avatar
+                              userData.avatar && typeof userData.avatar === 'string'
                                 ? userData.avatar.startsWith('http') || userData.avatar.startsWith('/storage')
                                   ? userData.avatar
                                   : `/storage/${userData.avatar}`
