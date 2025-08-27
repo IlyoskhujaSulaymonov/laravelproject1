@@ -9,6 +9,7 @@ import { Input } from "../../components/ui/input"
 import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import TestComponent from "../../components/TestComponent"
+import MathTutor from "../MathTutor"
 import {
   GraduationCap,
   Brain,
@@ -57,7 +58,8 @@ import {
   Filter,
   SortAsc,
   Calendar as CalendarIcon,
-  ExternalLink
+  ExternalLink,
+  Calculator
 } from "lucide-react"
 
 interface UserPlan {
@@ -128,7 +130,10 @@ export default function UserDashboard() {
     lastLogin: "",
     createdAt: "",
     updatedAt: "",
+    currentPlan: undefined // Explicitly set to undefined initially
   })
+
+
 
   const [editData, setEditData] = useState({ ...userData })
   const [passwordData, setPasswordData] = useState({
@@ -146,11 +151,22 @@ export default function UserDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [notificationCount, setNotificationCount] = useState(3)
+  const [usageStats, setUsageStats] = useState<any>(null)
+  const [usageLoading, setUsageLoading] = useState(true)
+  const [planLoading, setPlanLoading] = useState(true)
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [availablePlans, setAvailablePlans] = useState<any[]>([])
+  const [plansLoading, setPlansLoading] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<any>(null)
 
   // Test completion callback for the TestComponent
   const handleTestComplete = (result: any) => {
-    console.log('Test completed:', result)
-    // Additional logic can be added here if needed
+    // Refresh usage stats after test completion
+    fetchUsageStats()
+    // Refresh user data to get updated plan information
+    fetchUserData()
+    // Refresh current plan data
+    fetchCurrentPlan()
   }
 
   useEffect(() => {
@@ -471,7 +487,165 @@ export default function UserDashboard() {
 
   useEffect(() => {
     fetchUserData()
+    fetchUsageStats()
+    fetchCurrentPlan()
   }, [])
+
+  const fetchUsageStats = async () => {
+    setUsageLoading(true)
+    try {
+      const response = await fetch('/api/user-tests/assessment-status', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUsageStats(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching usage stats:', error)
+    } finally {
+      setUsageLoading(false)
+    }
+  }
+
+  const fetchCurrentPlan = async () => {
+    setPlanLoading(true)
+    try {
+      // Ensure CSRF cookie is set
+      await fetch('/sanctum/csrf-cookie', {
+        credentials: 'include'
+      })
+      
+      // Get CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      
+
+      
+      const response = await fetch('/api/user-plan/current', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': csrfToken || ''
+        },
+        credentials: 'include'
+      })
+      
+
+      
+      if (response.ok) {
+        const data = await response.json()
+
+        
+        if (data.success && data.data) {
+
+          // Update userData with current plan information
+          setUserData(prev => {
+            const updated = {
+              ...prev,
+              currentPlan: {
+                id: data.data.id.toString(),
+                plan_id: data.data.plan_id.toString(),
+                name: data.data.name,
+                slug: data.data.slug,
+                price: parseFloat(data.data.price),
+                duration: data.data.duration,
+                description: data.data.description,
+                features: Array.isArray(data.data.features) ? data.data.features : [],
+                assessments_limit: data.data.limits.assessments_limit,
+                lessons_limit: data.data.limits.lessons_limit,
+                ai_hints_limit: data.data.limits.ai_hints_limit,
+                subjects_limit: data.data.limits.subjects_limit,
+                starts_at: data.data.dates.starts_at ? data.data.dates.starts_at.split('T')[0] : null,
+                ends_at: data.data.dates.ends_at ? data.data.dates.ends_at.split('T')[0] : null,
+                is_active: Boolean(data.data.is_active),
+              }
+            }
+
+            return updated
+          })
+          
+          // Also update usageStats with more detailed information
+          setUsageStats(prev => ({
+            ...prev,
+            current_plan: {
+              name: data.data.name,
+              assessments_limit: data.data.limits.assessments_limit,
+              assessments_used: data.data.usage.assessments_used,
+              lessons_used: data.data.usage.lessons_used,
+              ai_hints_used: data.data.usage.ai_hints_used
+            },
+            remaining_assessments: data.data.remaining.assessments,
+            can_take_assessment: Boolean(data.data.can_take_assessment),
+            usage_percentage: {
+              assessments: data.data.limits.assessments_limit > 0 ? 
+                Math.round((data.data.usage.assessments_used / data.data.limits.assessments_limit) * 100) : 0
+            }
+          }))
+          
+
+        } else {
+          // Check if it's an authentication issue
+          if (response.status === 401) {
+            console.error('Authentication failed - user might not be logged in')
+          }
+        }
+      } else {
+        // Check for specific error types
+        if (response.status === 401) {
+          console.error('Authentication error - redirecting to login might be needed')
+        } else if (response.status === 404) {
+          console.error('API endpoint not found - check route registration')
+        } else if (response.status === 500) {
+          console.error('Server error - check Laravel logs')
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching current plan:', error)
+    } finally {
+      setPlanLoading(false)
+    }
+  }
+
+  const fetchAvailablePlans = async () => {
+    setPlansLoading(true)
+    try {
+      // Ensure CSRF cookie is set
+      await fetch('/sanctum/csrf-cookie', {
+        credentials: 'include'
+      })
+      
+      // Get CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      
+      const response = await fetch('/api/plans', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': csrfToken || ''
+        },
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          setAvailablePlans(data.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching available plans:', error)
+    } finally {
+      setPlansLoading(false)
+    }
+  }
 
 
 
@@ -489,6 +663,30 @@ export default function UserDashboard() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const handleUpgradePlan = async () => {
+    setShowPlanModal(true)
+    await fetchAvailablePlans()
+  }
+
+  const handleSelectPlan = (plan: any) => {
+    setSelectedPlan(plan)
+  }
+
+  const handleConfirmPlanSelection = () => {
+    if (selectedPlan) {
+      // Create a message for the admin with selected plan details
+      const message = `Salom! Men ${selectedPlan.name} rejasini tanlashni xohlayman.\n\nReja tafsilotlari:\n- Nomi: ${selectedPlan.name}\n- Narxi: ${selectedPlan.price > 0 ? selectedPlan.price.toLocaleString() + ' so\'m' : 'Bepul'}\n- Muddati: ${selectedPlan.duration > 0 ? selectedPlan.duration + ' kun' : 'Cheksiz'}\n- Testlar: ${selectedPlan.assessments_limit === 999 ? 'Cheksiz' : selectedPlan.assessments_limit}\n- Darslar: ${selectedPlan.lessons_limit === -1 ? 'Cheksiz' : selectedPlan.lessons_limit}\n- AI yordami: ${selectedPlan.ai_hints_limit === -1 ? 'Cheksiz' : selectedPlan.ai_hints_limit}\n\nIltimos, bu rejani faollashtiring.`
+      
+      const encodedMessage = encodeURIComponent(message)
+      const telegramUrl = `https://t.me/your_bot_username?start=upgrade_plan&text=${encodedMessage}`
+      
+      // Close modal and redirect to Telegram
+      setShowPlanModal(false)
+      setSelectedPlan(null)
+      window.open(telegramUrl, '_blank')
+    }
+  }
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -536,8 +734,8 @@ export default function UserDashboard() {
   const sidebarItems = [
     { id: "overview", label: "Umumiy ko'rinish", icon: Home },
     { id: "profile", label: "Profil", icon: User },
-    { id: "progress", label: "O'sish", icon: TrendingUp },
     { id: "tests", label: "Testlar", icon: BookOpen },
+    { id: "math-tutor", label: "Ai yordamchi", icon: Calculator },
     { id: "achievements", label: "Yutuqlar", icon: Trophy },
     { id: "settings", label: "Sozlamalar", icon: Settings },
     { id: "security", label: "Xavfsizlik", icon: Shield },
@@ -667,7 +865,7 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Current Plan Section */}
+      {/* Enhanced Current Plan Section */}
       <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-indigo-800">
@@ -676,8 +874,21 @@ export default function UserDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {userData.currentPlan ? (
-            <div className="space-y-4">
+
+          
+          {planLoading ? (
+            <div className="text-center py-8">
+              <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                <GraduationCap className="h-8 w-8 text-indigo-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-indigo-900 mb-2">Reja ma'lumotlari yuklanmoqda...</h3>
+              <div className="animate-pulse space-y-2">
+                <div className="h-4 bg-indigo-200 rounded w-3/4 mx-auto"></div>
+                <div className="h-4 bg-indigo-200 rounded w-1/2 mx-auto"></div>
+              </div>
+            </div>
+          ) : userData.currentPlan && userData.currentPlan.name ? (
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-2xl font-bold text-indigo-900">{userData.currentPlan.name}</h3>
@@ -685,7 +896,7 @@ export default function UserDashboard() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-indigo-800">
-                    {userData.currentPlan.price > 0 ? `$${userData.currentPlan.price}` : "Bepul"}
+                    {userData.currentPlan.price > 0 ? `${userData.currentPlan.price.toLocaleString()} so'm` : "Bepul"}
                   </div>
                   <div className="text-sm text-indigo-600">
                     {userData.currentPlan.duration > 0 ? `${userData.currentPlan.duration} kun` : "Cheksiz"}
@@ -693,32 +904,91 @@ export default function UserDashboard() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                <div className="bg-white p-3 rounded-lg border border-indigo-100">
-                  <div className="text-sm text-gray-600">Testlar</div>
-                  <div className="text-lg font-semibold text-indigo-800">
-                    {userData.currentPlan.assessments_limit === -1 ? "Cheksiz" : userData.currentPlan.assessments_limit}
+              {/* Usage Statistics Grid */}
+              {usageLoading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-white p-4 rounded-lg border border-indigo-100 animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-6 bg-gray-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                  <div className="bg-white p-4 rounded-lg border border-indigo-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-gray-600">Testlar</div>
+                      <BookOpen className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div className="text-lg font-semibold text-indigo-800">
+                      {usageStats ? (
+                        <span className={`${
+                          usageStats.can_take_assessment ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {usageStats.remaining_assessments} / {userData.currentPlan.assessments_limit === 999 ? '∞' : userData.currentPlan.assessments_limit}
+                        </span>
+                      ) : (
+                        userData.currentPlan.assessments_limit === 999 ? "Cheksiz" : userData.currentPlan.assessments_limit
+                      )}
+                    </div>
+                    {usageStats && userData.currentPlan.assessments_limit < 999 && (
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-300 ${
+                            usageStats.can_take_assessment ? 'bg-green-500' : 'bg-red-500'
+                          }`}
+                          style={{
+                            width: `${Math.max(5, (usageStats.remaining_assessments / userData.currentPlan.assessments_limit) * 100)}%`
+                          }}
+                        ></div>
+                      </div>
+                    )}
+                    {usageStats && usageStats.current_plan && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Ishlatilgan: {usageStats.current_plan.assessments_used || 0}
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border border-indigo-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-gray-600">Darslar</div>
+                      <Brain className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div className="text-lg font-semibold text-indigo-800">
+                      {userData.currentPlan.lessons_limit === -1 ? "Cheksiz" : userData.currentPlan.lessons_limit}
+                    </div>
+                    {usageStats && usageStats.current_plan && userData.currentPlan.lessons_limit > 0 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Ishlatilgan: {usageStats.current_plan.lessons_used || 0}
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border border-indigo-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-gray-600">AI yordami</div>
+                      <Zap className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div className="text-lg font-semibold text-indigo-800">
+                      {userData.currentPlan.ai_hints_limit === -1 ? "Cheksiz" : userData.currentPlan.ai_hints_limit}
+                    </div>
+                    {usageStats && usageStats.current_plan && userData.currentPlan.ai_hints_limit > 0 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Ishlatilgan: {usageStats.current_plan.ai_hints_used || 0}
+                      </div>
+                    )}
+                  </div>
+                  <div className="bg-white p-4 rounded-lg border border-indigo-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-gray-600">Fanlar</div>
+                      <Target className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <div className="text-lg font-semibold text-indigo-800">
+                      {userData.currentPlan.subjects_limit === -1 ? "Cheksiz" : userData.currentPlan.subjects_limit}
+                    </div>
                   </div>
                 </div>
-                <div className="bg-white p-3 rounded-lg border border-indigo-100">
-                  <div className="text-sm text-gray-600">Darslar</div>
-                  <div className="text-lg font-semibold text-indigo-800">
-                    {userData.currentPlan.lessons_limit === -1 ? "Cheksiz" : userData.currentPlan.lessons_limit}
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-lg border border-indigo-100">
-                  <div className="text-sm text-gray-600">AI yordami</div>
-                  <div className="text-lg font-semibold text-indigo-800">
-                    {userData.currentPlan.ai_hints_limit === -1 ? "Cheksiz" : userData.currentPlan.ai_hints_limit}
-                  </div>
-                </div>
-                <div className="bg-white p-3 rounded-lg border border-indigo-100">
-                  <div className="text-sm text-gray-600">Fanlar</div>
-                  <div className="text-lg font-semibold text-indigo-800">
-                    {userData.currentPlan.subjects_limit === -1 ? "Cheksiz" : userData.currentPlan.subjects_limit}
-                  </div>
-                </div>
-              </div>
+              )}
               
               {userData.currentPlan.features && userData.currentPlan.features.length > 0 && (
                 <div className="mt-4">
@@ -726,6 +996,7 @@ export default function UserDashboard() {
                   <div className="flex flex-wrap gap-2">
                     {userData.currentPlan.features.map((feature, index) => (
                       <Badge key={index} className="bg-indigo-100 text-indigo-800">
+                        <CheckCircle className="h-3 w-3 mr-1" />
                         {feature}
                       </Badge>
                     ))}
@@ -733,34 +1004,52 @@ export default function UserDashboard() {
                 </div>
               )}
               
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-indigo-200">
-                <div>
-                  <div className="text-sm text-gray-600">Boshlangan sana</div>
-                  <div className="font-medium text-indigo-800">
-                    {userData.currentPlan.starts_at ? new Date(userData.currentPlan.starts_at).toLocaleDateString('uz-UZ') : "Ma'lum emas"}
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-indigo-200">
+                <div className="flex space-x-6">
+                  <div>
+                    <div className="text-sm text-gray-600">Boshlangan sana</div>
+                    <div className="font-medium text-indigo-800">
+                      {userData.currentPlan.starts_at ? new Date(userData.currentPlan.starts_at).toLocaleDateString('uz-UZ') : "Ma'lum emas"}
+                    </div>
                   </div>
                   {userData.currentPlan.ends_at && (
-                    <>
-                      <div className="text-sm text-gray-600 mt-2">Tugash sanasi</div>
+                    <div>
+                      <div className="text-sm text-gray-600">Tugash sanasi</div>
                       <div className="font-medium text-indigo-800">
                         {new Date(userData.currentPlan.ends_at).toLocaleDateString('uz-UZ')}
                       </div>
-                    </>
+                    </div>
                   )}
+                  <div>
+                    <div className="text-sm text-gray-600">Holat</div>
+                    <Badge className={`${
+                      userData.currentPlan.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    }`}>
+                      {userData.currentPlan.is_active ? "Faol" : "Faol emas"}
+                    </Badge>
+                  </div>
                 </div>
+                
+                {/* Upgrade Button for Free and Premium users */}
                 <div className="flex items-center space-x-2">
-                  <Badge className={`${
-                    userData.currentPlan.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                  }`}>
-                    {userData.currentPlan.is_active ? "Faol" : "Faol emas"}
-                  </Badge>
-                  <Button 
-                    onClick={() => window.open('https://t.me/your_bot_username', '_blank')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Yangi rejani olish
-                  </Button>
+                  {(userData.currentPlan.slug === 'free' || userData.currentPlan.slug === 'premium') && (
+                    <Button 
+                      onClick={handleUpgradePlan}
+                      className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white flex items-center space-x-2"
+                    >
+                      <TrendingUp className="h-4 w-4" />
+                      <span>Rejani yangilash</span>
+                    </Button>
+                  )}
+                  {usageStats && !usageStats.can_take_assessment && (
+                    <Button 
+                      onClick={handleUpgradePlan}
+                      className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white flex items-center space-x-2"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Limit tugagan</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -772,8 +1061,8 @@ export default function UserDashboard() {
               <h3 className="text-lg font-semibold text-indigo-900 mb-2">Hech qanday faol reja yo'q</h3>
               <p className="text-indigo-600 mb-4">Ta'lim rejasini tanlang va o'qishni boshlang!</p>
               <Button 
-                onClick={() => window.open('https://t.me/your_bot_username', '_blank')}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleUpgradePlan}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Reja tanlash
@@ -961,8 +1250,8 @@ export default function UserDashboard() {
                         ? editData.avatar
                         : editData.avatar
                         ? `/storage/${editData.avatar}`
-                        : "/images/avatars/avatar.svg"
-                      : "/images/avatars/avatar.svg"
+                        : "images/avatar.svg"
+                      : "images/avatar.svg"
                   }
                   alt="Profile"
                   className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
@@ -1456,16 +1745,10 @@ export default function UserDashboard() {
         return renderProfile()
       case "security":
         return renderSecurity()
-      case "progress":
-        return (
-          <div className="text-center py-12">
-            <TrendingUp className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">O'sish bo'limi</h3>
-            <p className="text-gray-500">Tez orada...</p>
-          </div>
-        )
       case "tests":
         return <TestComponent onTestComplete={handleTestComplete} />
+      case "math-tutor":
+        return <MathTutor />
       case "achievements":
         return (
           <div className="text-center py-12">
@@ -1744,7 +2027,7 @@ export default function UserDashboard() {
                           ? userData.avatar.startsWith('http') || userData.avatar.startsWith('/storage')
                             ? userData.avatar
                             : `/storage/${userData.avatar}`
-                          : "/images/avatars/avatar.svg"
+                          : "images/avatar.svg"
                       }
                       alt="Profile"
                       className="w-9 h-9 rounded-xl object-cover border-2 border-white shadow-md"
@@ -1770,7 +2053,7 @@ export default function UserDashboard() {
                                 ? userData.avatar.startsWith('http') || userData.avatar.startsWith('/storage')
                                   ? userData.avatar
                                   : `/storage/${userData.avatar}`
-                                : "/placeholder.svg"
+                                : "/images/avatar.svg"
                             }
                             alt="Profile"
                             className="w-16 h-16 rounded-xl object-cover border-3 border-white shadow-lg"
@@ -1828,36 +2111,6 @@ export default function UserDashboard() {
                         <div className="flex-1">
                           <span className="font-medium">Profil</span>
                           <p className="text-xs text-gray-500">Shaxsiy ma'lumotlar</p>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setActiveSection('progress')
-                          setShowUserMenu(false)
-                        }}
-                        className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-green-50 w-full text-left transition-colors group"
-                      >
-                        <div className="bg-green-100 p-2 rounded-lg group-hover:bg-green-200 transition-colors">
-                          <TrendingUp className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="font-medium">O'sish</span>
-                          <p className="text-xs text-gray-500">Natijalar va statistika</p>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setActiveSection('settings')
-                          setShowUserMenu(false)
-                        }}
-                        className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-purple-50 w-full text-left transition-colors group"
-                      >
-                        <div className="bg-purple-100 p-2 rounded-lg group-hover:bg-purple-200 transition-colors">
-                          <Settings className="h-4 w-4 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <span className="font-medium">Sozlamalar</span>
-                          <p className="text-xs text-gray-500">Tizim sozlamalari</p>
                         </div>
                       </button>
                       <button
@@ -1968,6 +2221,194 @@ export default function UserDashboard() {
           <div className="flex-1">{renderContent()}</div>
         </div>
       </div>
+
+      {/* Plan Selection Modal */}
+      {showPlanModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPlanModal(false)
+              setSelectedPlan(null)
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Tarif rejasini tanlang</h2>
+                  <p className="text-gray-600 mt-1">O'zingizga mos keladigan rejani tanlang va admin bilan bog'laning</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowPlanModal(false)
+                    setSelectedPlan(null)
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {plansLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="border border-gray-200 rounded-xl p-6 animate-pulse">
+                      <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                      <div className="h-8 bg-gray-200 rounded mb-4"></div>
+                      <div className="space-y-2 mb-6">
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                        <div className="h-4 bg-gray-200 rounded"></div>
+                      </div>
+                      <div className="h-10 bg-gray-200 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {availablePlans.map((plan) => (
+                    <div
+                      key={plan.id}
+                      className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                        selectedPlan?.id === plan.id
+                          ? 'border-blue-500 bg-blue-50 shadow-lg'
+                          : plan.slug === userData.currentPlan?.slug
+                          ? 'border-gray-300 bg-gray-50'
+                          : 'border-gray-200 hover:border-blue-300'
+                      }`}
+                      onClick={() => plan.slug !== userData.currentPlan?.slug && handleSelectPlan(plan)}
+                    >
+                      {plan.slug === userData.currentPlan?.slug && (
+                        <div className="flex items-center space-x-2 mb-4">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <span className="text-sm font-medium text-green-700">Joriy rejangiz</span>
+                        </div>
+                      )}
+                      
+                      <div className="mb-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                        <div className="text-3xl font-bold text-blue-600 mb-2">
+                          {plan.price > 0 ? `${plan.price.toLocaleString()} so'm` : "Bepul"}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {plan.duration > 0 ? `${plan.duration} kun` : "Cheksiz muddatli"}
+                        </div>
+                      </div>
+                      
+                      {plan.description && (
+                        <p className="text-gray-600 mb-4 text-sm">{plan.description}</p>
+                      )}
+                      
+                      <div className="space-y-3 mb-6">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Testlar:</span>
+                          <span className="font-medium text-gray-900">
+                            {plan.assessments_limit === 999 ? "Cheksiz" : plan.assessments_limit}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Darslar:</span>
+                          <span className="font-medium text-gray-900">
+                            {plan.lessons_limit === -1 ? "Cheksiz" : plan.lessons_limit}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">AI yordami:</span>
+                          <span className="font-medium text-gray-900">
+                            {plan.ai_hints_limit === -1 ? "Cheksiz" : plan.ai_hints_limit}
+                          </span>
+                        </div>
+                        {plan.subjects_limit && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600">Fanlar:</span>
+                            <span className="font-medium text-gray-900">
+                              {plan.subjects_limit === -1 ? "Cheksiz" : plan.subjects_limit}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {plan.features && plan.features.length > 0 && (
+                        <div className="mb-6">
+                          <h4 className="text-sm font-medium text-gray-900 mb-2">Xususiyatlar:</h4>
+                          <div className="space-y-1">
+                            {plan.features.slice(0, 3).map((feature: string, index: number) => (
+                              <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
+                                <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                <span>{feature}</span>
+                              </div>
+                            ))}
+                            {plan.features.length > 3 && (
+                              <div className="text-sm text-gray-500">+{plan.features.length - 3} boshqa xususiyat</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {plan.slug === userData.currentPlan?.slug ? (
+                        <Button disabled className="w-full bg-gray-100 text-gray-500 cursor-not-allowed">
+                          Joriy reja
+                        </Button>
+                      ) : (
+                        <Button
+                          className={`w-full transition-all duration-200 ${
+                            selectedPlan?.id === plan.id
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSelectPlan(plan)
+                          }}
+                        >
+                          {selectedPlan?.id === plan.id ? (
+                            <div className="flex items-center space-x-2">
+                              <CheckCircle className="h-4 w-4" />
+                              <span>Tanlangan</span>
+                            </div>
+                          ) : (
+                            "Tanlash"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {!plansLoading && availablePlans.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-gray-500 mb-4">Hozirda mavjud rejalar yo'q</div>
+                </div>
+              )}
+            </div>
+            
+            {selectedPlan && (
+              <div className="p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Tanlangan reja: {selectedPlan.name}</h3>
+                    <p className="text-gray-600 text-sm">Admin bilan bog'lanib, rejani faollashtiring</p>
+                  </div>
+                  <Button
+                    onClick={handleConfirmPlanSelection}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex items-center space-x-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    <span>Admin bilan bog'lanish</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

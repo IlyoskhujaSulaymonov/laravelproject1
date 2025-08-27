@@ -1,8 +1,9 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\User\UserTestController;
+use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\LearningController;
+use App\Http\Controllers\Api\UserPlanController;
+use App\Http\Controllers\Api\UserTestController;
 use App\Models\Region;
 use Illuminate\Support\Facades\Route;
 
@@ -10,11 +11,21 @@ use Illuminate\Support\Facades\Route;
 
 // Keep only API-specific routes here
 Route::middleware(['auth:sanctum'])->group(function () {
+    // AI Integration routes for Math Tutor
+    Route::prefix('api/ai')->middleware(['throttle:60,1', App\Http\Middleware\AiRateLimit::class])->group(function () {
+        Route::post('/explain-math', [AiController::class, 'explainMath']);
+        Route::post('/solve-problem', [AiController::class, 'solveProblem']);
+        Route::post('/get-hint', [AiController::class, 'getHint']);
+        Route::get('/status', [AiController::class, 'status']); // Status check doesn't need rate limiting
+    });
+
     // User Tests API routes
     Route::prefix('api/user-tests')->group(function () {
         Route::get('/', [UserTestController::class, 'index']);
         Route::post('/', [UserTestController::class, 'store']);
         Route::get('/stats', [UserTestController::class, 'getUserStats']);
+        Route::get('/assessment-status', [UserTestController::class, 'getAssessmentStatus']);
+        Route::get('/level-finding/{subjectId}', [UserTestController::class, 'startLevelFindingTest']);
         Route::get('/topics', [UserTestController::class, 'getAvailableTopics']);
         Route::get('/subjects', [UserTestController::class, 'getSubjects']);
         Route::get('/subjects/{subjectId}/topics', [UserTestController::class, 'getTopicsBySubject']);
@@ -46,6 +57,23 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/skill-levels', [LearningController::class, 'getSkillLevels']);
         Route::post('/recommendation/{recommendationId}/dismiss', [LearningController::class, 'dismissRecommendation']);
     });
+
+    // User Plan API routes
+    Route::prefix('api/user-plan')->group(function () {
+        Route::get('/current', [UserPlanController::class, 'getCurrentPlan']);
+        Route::get('/usage', [UserPlanController::class, 'getPlanUsage']);
+    });
+
+});
+
+// Public Plans API route (accessible to all users)
+Route::get('/api/plans', function () {
+    return response()->json([
+        'success' => true,
+        'data' => \App\Models\Plan::select('id', 'name', 'slug', 'description', 'price', 'duration', 'features', 'assessments_limit', 'lessons_limit', 'ai_hints_limit', 'subjects_limit')
+            ->orderBy('price', 'asc')
+            ->get()
+    ]);
 });
 
 Route::get('/api/regions', function () {

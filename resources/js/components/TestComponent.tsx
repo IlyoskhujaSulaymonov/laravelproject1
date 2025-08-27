@@ -50,18 +50,24 @@ export default function TestComponent({ onTestComplete }: TestComponentProps) {
     total_time_spent: 0
   })
   const [availableTopics, setAvailableTopics] = useState<TestTopic[]>([])
+  const [availableSubjects, setAvailableSubjects] = useState<any[]>([])
   const [selectedTopic, setSelectedTopic] = useState<string>('')
+  const [selectedSubject, setSelectedSubject] = useState<string>('')
   const [testSession, setTestSession] = useState<TestSession | null>(null)
   const [showTestResults, setShowTestResults] = useState(false)
   const [lastTestResult, setLastTestResult] = useState<any>(null)
   const [filters, setFilters] = useState<TestFilters>({})
   const [showFilters, setShowFilters] = useState(false)
+  const [assessmentStatus, setAssessmentStatus] = useState<any>(null)
+  const [isLevelFindingMode, setIsLevelFindingMode] = useState(false)
 
   // Fetch test data
   useEffect(() => {
     fetchUserTests()
     fetchTestStats()
     fetchAvailableTopics()
+    fetchAvailableSubjects()
+    fetchAssessmentStatus()
   }, [])
 
   const fetchUserTests = async (filterParams?: TestFilters) => {
@@ -133,6 +139,46 @@ export default function TestComponent({ onTestComplete }: TestComponentProps) {
       }
     } catch (error) {
       console.error('Error fetching topics:', error)
+    }
+  }
+
+  const fetchAvailableSubjects = async () => {
+    try {
+      const response = await fetch('/api/user-tests/subjects', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableSubjects(data.data.subjects)
+      }
+    } catch (error) {
+      console.error('Error fetching subjects:', error)
+    }
+  }
+
+  const fetchAssessmentStatus = async () => {
+    try {
+      const response = await fetch('/api/user-tests/assessment-status', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setAssessmentStatus(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching assessment status:', error)
     }
   }
 
@@ -210,7 +256,8 @@ export default function TestComponent({ onTestComplete }: TestComponentProps) {
       total_questions: testSession.questions.length,
       correct_answers: correctAnswers,
       time_spent: timeSpentSeconds,
-      questions_data: questionsData
+      questions_data: questionsData,
+      test_type: isLevelFindingMode ? 'level_finding' : 'assessment'
     }
 
     try {
@@ -236,21 +283,71 @@ export default function TestComponent({ onTestComplete }: TestComponentProps) {
         })
         setShowTestResults(true)
         setTestSession(null)
+        setIsLevelFindingMode(false)
         
-        // Refresh test data
+        // Refresh test data and assessment status
         await fetchUserTests()
         await fetchTestStats()
+        await fetchAssessmentStatus()
         
         if (onTestComplete) {
           onTestComplete(result.data.test)
         }
       } else {
-        console.error('Error saving test:', await response.text())
-        alert('Test natijasini saqlashda xatolik yuz berdi!')
+        const errorData = await response.json()
+        if (response.status === 403 && errorData.message) {
+          alert(errorData.message)
+        } else {
+          alert('Test natijasini saqlashda xatolik yuz berdi!')
+        }
       }
     } catch (error) {
       console.error('Error finishing test:', error)
       alert('Test yakunlashda xatolik yuz berdi!')
+    }
+  }
+
+  const startLevelFindingTest = async (subjectId: string) => {
+    if (!assessmentStatus?.can_take_assessment) {
+      alert('Sizda ushbu oy uchun baholash testlari tugagan. Yangisini olish uchun rejangizni yangilang.')
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/user-tests/level-finding/${subjectId}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.data.questions.length > 0) {
+          const session: TestSession = {
+            topic_id: null,
+            topic: { title: `Daraja aniqlash - ${availableSubjects.find(s => s.id == subjectId)?.name}` },
+            questions: data.data.questions,
+            current_question_index: 0,
+            user_answers: {},
+            start_time: new Date(),
+            status: 'in_progress'
+          }
+          setTestSession(session)
+          setIsLevelFindingMode(true)
+          alert(data.data.message)
+        } else {
+          alert('Bu fan uchun savollar topilmadi!')
+        }
+      } else {
+        const errorData = await response.json()
+        alert(errorData.message || 'Daraja aniqlash testini boshlashda xatolik!')
+      }
+    } catch (error) {
+      console.error('Error starting level finding test:', error)
+      alert('Test boshlashda xatolik yuz berdi!')
     }
   }
 
@@ -317,9 +414,12 @@ export default function TestComponent({ onTestComplete }: TestComponentProps) {
       testsLoading={testsLoading}
       testStats={testStats}
       availableTopics={availableTopics}
+      availableSubjects={availableSubjects}
+      assessmentStatus={assessmentStatus}
       selectedTopic={selectedTopic}
       onTopicSelect={setSelectedTopic}
       onStartTest={startTest}
+      onStartLevelFinding={startLevelFindingTest}
       filters={filters}
       showFilters={showFilters}
       onToggleFilters={() => setShowFilters(!showFilters)}
@@ -486,71 +586,174 @@ function TestDashboardView({
   userTests, 
   testsLoading, 
   testStats, 
-  availableTopics, 
+  availableTopics,
+  availableSubjects,
+  assessmentStatus,
   selectedTopic, 
   onTopicSelect, 
   onStartTest,
+  onStartLevelFinding,
   filters,
   showFilters,
   onToggleFilters,
   onApplyFilters
 }: any) {
+  const [selectedSubject, setSelectedSubject] = useState('')
+  
   return (
     <div className="space-y-6">
+      {/* Assessment Status Card */}
+      {assessmentStatus && (
+        <Card className={`border-2 ${
+          assessmentStatus.needs_level_assessment 
+            ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200'
+            : assessmentStatus.can_take_assessment
+            ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+            : 'bg-gradient-to-r from-red-50 to-pink-50 border-red-200'
+        }`}>
+          <CardHeader>
+            <CardTitle className={`text-xl flex items-center gap-3 ${
+              assessmentStatus.needs_level_assessment ? 'text-orange-800'
+              : assessmentStatus.can_take_assessment ? 'text-green-800'
+              : 'text-red-800'
+            }`}>
+              <Target className="h-6 w-6" />
+              Baholash holati
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {assessmentStatus.needs_level_assessment ? (
+              <div>
+                <p className="text-orange-700 mb-4">
+                  Siz hali o'z darajangizni aniqlamagansiz. Testlarni boshlashdan oldin darajangizni aniqlang.
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">
+                      Fanni tanlang
+                    </label>
+                    <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Fanni tanlang" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSubjects.map((subject: any) => (
+                          <SelectItem key={subject.id} value={subject.id.toString()}>
+                            {subject.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
+                      onClick={() => selectedSubject && onStartLevelFinding(selectedSubject)}
+                      disabled={!selectedSubject}
+                      className="w-full bg-gradient-to-r from-orange-600 to-yellow-600 hover:from-orange-700 hover:to-yellow-700 text-white"
+                    >
+                      <Target className="h-4 w-4 mr-2" />
+                      Darajani aniqlash
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className={`text-2xl font-bold mb-1 ${
+                    assessmentStatus.can_take_assessment ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {assessmentStatus.remaining_assessments}
+                  </div>
+                  <div className="text-sm text-gray-600">Qolgan testlar</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className="text-xl font-semibold text-blue-600 mb-1">
+                    {assessmentStatus.current_plan?.name || 'Rejasiz'}
+                  </div>
+                  <div className="text-sm text-gray-600">Joriy reja</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg">
+                  <div className="text-xl font-semibold text-purple-600 mb-1">
+                    {assessmentStatus.current_plan?.assessments_limit || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Umumiy limit</div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
       {/* Enhanced Test Visualizations */}
       <TestVisualization stats={testStats} recentTests={userTests} />
 
       {/* Start New Test */}
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-2xl text-blue-800 flex items-center gap-3">
-            <PlayCircle className="h-8 w-8" />
-            Yangi test boshlash
-          </CardTitle>
-          <CardDescription className="text-blue-600">
-            Mavzuni tanlang va bilimingizni sinab ko'ring
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Mavzuni tanlang
-              </label>
-              <Select value={selectedTopic} onValueChange={onTopicSelect}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Mavzuni tanlang" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableTopics.map((topic: TestTopic) => (
-                    <SelectItem key={topic.id} value={topic.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4" />
-                        <span>{topic.title}</span>
-                        {topic.subject && (
-                          <Badge variant="outline" className="ml-2">
-                            {topic.subject.name}
-                          </Badge>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      {assessmentStatus && !assessmentStatus.needs_level_assessment && (
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="text-2xl text-blue-800 flex items-center gap-3">
+              <PlayCircle className="h-8 w-8" />
+              Yangi test boshlash
+            </CardTitle>
+            <CardDescription className="text-blue-600">
+              {assessmentStatus.can_take_assessment 
+                ? 'Mavzuni tanlang va bilimingizni sinab ko\'ring'
+                : 'Testlar limiti tugagan. Keyingi oyni kuting yoki rejangizni yangilang.'
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Mavzuni tanlang
+                </label>
+                <Select 
+                  value={selectedTopic} 
+                  onValueChange={onTopicSelect}
+                  disabled={!assessmentStatus.can_take_assessment}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Mavzuni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTopics.map((topic: TestTopic) => (
+                      <SelectItem key={topic.id} value={topic.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4" />
+                          <span>{topic.title}</span>
+                          {topic.subject && (
+                            <Badge variant="outline" className="ml-2">
+                              {topic.subject.name}
+                            </Badge>
+                          )}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-end">
+                <Button 
+                  onClick={() => selectedTopic && onStartTest(selectedTopic)}
+                  disabled={!selectedTopic || !assessmentStatus.can_take_assessment}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                >
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Testni boshlash
+                </Button>
+              </div>
             </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={() => selectedTopic && onStartTest(selectedTopic)}
-                disabled={!selectedTopic}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                <PlayCircle className="h-4 w-4 mr-2" />
-                Testni boshlash
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            {!assessmentStatus.can_take_assessment && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">
+                  Sizda bu oy uchun test limiti tugagan. Qolgan testlar: {assessmentStatus.remaining_assessments}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Tests */}
       <Card>

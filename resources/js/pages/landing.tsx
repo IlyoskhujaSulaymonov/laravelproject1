@@ -53,6 +53,7 @@ import {
   ExternalLink,
   User,
   LogOut,
+  AlertTriangle,
 } from "lucide-react"
 import AIAssistant from "@/components/ai-assistant"
 
@@ -66,6 +67,35 @@ export default function EducationLanding() {
   const [accuracyCount, setAccuracyCount] = useState(0)
   const [email, setEmail] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [availablePlans, setAvailablePlans] = useState<Array<{
+    id: number
+    name: string
+    slug: string
+    description: string
+    price: number
+    duration: number
+    features: string[]
+    assessments_limit: number
+    lessons_limit: number
+    ai_hints_limit: number
+    subjects_limit: number
+  }>>([])
+  const [selectedPlan, setSelectedPlan] = useState<{
+    id: number
+    name: string
+    slug: string
+    description: string
+    price: number
+    duration: number
+    features: string[]
+    assessments_limit: number
+    lessons_limit: number
+    ai_hints_limit: number
+    subjects_limit: number
+  } | null>(null)
+  const [plansLoading, setPlansLoading] = useState(false)
+  const [currentPlanSlug, setCurrentPlanSlug] = useState<string | null>(null)
 
   const { isLoggedIn, user, loading, logout } = useAuth()
 
@@ -105,10 +135,18 @@ export default function EducationLanding() {
         setShowUserMenu(false)
         setIsMenuOpen(false)
       }
+      if (!target.closest('[data-plan-modal]')) {
+        setShowPlanModal(false)
+      }
     }
     
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Auto-fetch plans on component mount
+  useEffect(() => {
+    fetchAvailablePlans()
   }, [])
 
   const toggleSection = (section: string) => {
@@ -150,6 +188,79 @@ export default function EducationLanding() {
     } finally {
       window.location.href = "/"
     }
+  }
+
+  // Fetch available plans with current plan detection
+  const fetchAvailablePlans = async () => {
+    setPlansLoading(true)
+    try {
+      const response = await fetch("/api/plans", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "include",
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          setAvailablePlans(data.data)
+          
+          // Get user's current plan to make it unselectable
+          if (isLoggedIn && user) {
+            try {
+              const userPlanResponse = await fetch("/api/user-plan/current", {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  "X-Requested-With": "XMLHttpRequest",
+                },
+                credentials: "include",
+              })
+              
+              if (userPlanResponse.ok) {
+                const userPlanData = await userPlanResponse.json()
+                if (userPlanData.success && userPlanData.data) {
+                  setCurrentPlanSlug(userPlanData.data.slug)
+                }
+              }
+            } catch (error) {
+              console.log("Could not fetch user plan:", error)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching plans:", error)
+    } finally {
+      setPlansLoading(false)
+    }
+  }
+
+  const handlePlanSelection = async (plan: typeof availablePlans[0]) => {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      // Redirect to login page
+      window.location.href = "/login"
+      return
+    }
+
+    setSelectedPlan(plan)
+    setShowPlanModal(true)
+  }
+
+  const handleConfirmPlanSelection = async () => {
+    if (!selectedPlan) return
+
+    const message = `Salom! Men ${selectedPlan.name} rejasini tanlashni xohlayman.\n\nReja tafsilotlari:\n• Nomi: ${selectedPlan.name}\n• Narx: ${selectedPlan.price.toLocaleString()} so'm/${selectedPlan.duration} kun\n• Tavsif: ${selectedPlan.description}\n\nIltimos, bu reja haqida batafsil ma'lumot bering va to'lov jarayoni haqida tushuntiring.`
+    
+    const telegramUrl = `https://t.me/talimtizimi_admin?text=${encodeURIComponent(message)}`
+    window.open(telegramUrl, "_blank")
+    
+    setShowPlanModal(false)
+    setSelectedPlan(null)
   }
 
   const navItems = [
@@ -945,51 +1056,195 @@ export default function EducationLanding() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Boshlang'ich",
-                price: "Bepul",
-                features: ["Asosiy testlar", "Cheklangan AI tahlil", "Standart yordam"],
-                buttonText: "Hoziroq Boshlash",
-              },
-              {
-                title: "O'rta",
-                price: "99,000 so'm / oy",
-                features: ["Barcha testlar", "To'liq AI tahlil", "24/7 yordam", "Shaxsiy ta'lim yo'li"],
-                buttonText: "O'tish",
-              },
-              {
-                title: "Premium",
-                price: "199,000 so'm / oy",
-                features: ["Barcha imkoniyatlar", "Maxsus AI yordam", "O'sish kuzatuvi", "Sertifikat tayyorlovi"],
-                buttonText: "O'tish",
-              },
-            ].map((plan, index) => (
-              <Card
-                key={index}
-                className={`hover:shadow-xl transition-all duration-300 transform hover:scale-105 group animate-in fade-in-50 slide-in-from-bottom-4 delay-${(index + 1) * 100}`}
+          {plansLoading ? (
+            <div className="text-center py-16">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="text-lg text-gray-600">Rejalar yuklanmoqda...</p>
+            </div>
+          ) : availablePlans.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {availablePlans.map((plan, index) => {
+                const isCurrentPlan = currentPlanSlug === plan.slug
+                return (
+                  <Card
+                    key={plan.id}
+                    className={`relative overflow-hidden group animate-in fade-in-50 slide-in-from-bottom-4 delay-${(index + 1) * 100} transition-all duration-300 ${
+                      isCurrentPlan 
+                        ? 'ring-2 ring-green-500 bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-lg cursor-default' 
+                        : 'hover:shadow-xl hover:scale-105 border-2 hover:border-blue-200 bg-white cursor-pointer'
+                    }`}
+                  >
+                    {/* Current Plan Ribbon */}
+                    {isCurrentPlan && (
+                      <div className="absolute top-0 right-0 w-0 h-0 border-t-[50px] border-r-[50px] border-t-green-500 border-r-transparent z-20">
+                        <CheckCircle className="absolute -top-10 -right-10 h-4 w-4 text-white" />
+                      </div>
+                    )}
+                    
+                    {/* Popular badge for middle plan */}
+                    {!isCurrentPlan && index === 1 && (
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 animate-pulse">
+                          <Star className="h-3 w-3 mr-1" />
+                          Mashhur
+                        </Badge>
+                      </div>
+                    )}
+                    
+                    <CardHeader className={`text-center pb-4 relative z-10 ${
+                      isCurrentPlan ? 'bg-gradient-to-r from-green-100/80 to-emerald-100/80' : ''
+                    }`}>
+                      <CardTitle className={`text-3xl font-bold mb-2 ${
+                        isCurrentPlan ? 'text-green-800' : 'text-gray-900'
+                      }`}>
+                        {plan.name}
+                        {isCurrentPlan && (
+                          <div className="flex items-center justify-center mt-2">
+                            <span className="inline-flex items-center text-sm font-medium text-green-700 bg-green-100 px-3 py-1 rounded-full border border-green-200">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Faol reja
+                            </span>
+                          </div>
+                        )}
+                      </CardTitle>
+                      <div className="mb-4">
+                        <span className={`text-4xl font-bold ${
+                          isCurrentPlan ? 'text-green-600' : 'text-blue-600'
+                        }`}>
+                          {plan.price === 0 ? 'Bepul' : plan.price.toLocaleString()}
+                        </span>
+                        {plan.price > 0 && (
+                          <span className="text-lg text-gray-600 ml-1">so'm</span>
+                        )}
+                        <div className="text-sm text-gray-500">{plan.duration} kun</div>
+                      </div>
+                      <CardDescription className={`text-base ${
+                        isCurrentPlan ? 'text-green-700' : 'text-gray-600'
+                      }`}>
+                        {plan.description}
+                      </CardDescription>
+                    </CardHeader>
+                    
+                    <CardContent className="p-6 pt-0">
+                      <div className="space-y-4 mb-6">
+                        {/* Limits */}
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className={`h-4 w-4 ${
+                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
+                            }`} />
+                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
+                              {plan.assessments_limit} test
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className={`h-4 w-4 ${
+                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
+                            }`} />
+                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
+                              {plan.lessons_limit} dars
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className={`h-4 w-4 ${
+                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
+                            }`} />
+                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
+                              {plan.ai_hints_limit} AI maslahat
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <CheckCircle className={`h-4 w-4 ${
+                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
+                            }`} />
+                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
+                              {plan.subjects_limit} fan
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Features */}
+                        {plan.features && plan.features.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className={`font-semibold mb-2 ${
+                              isCurrentPlan ? 'text-green-800' : 'text-gray-900'
+                            }`}>
+                              Qo'shimcha imkoniyatlar:
+                            </h5>
+                            <ul className="space-y-2">
+                              {plan.features.map((feature, idx) => (
+                                <li key={idx} className="flex items-center space-x-2 text-sm">
+                                  <CheckCircle className={`h-4 w-4 flex-shrink-0 ${
+                                    isCurrentPlan ? 'text-green-600' : 'text-green-500'
+                                  }`} />
+                                  <span className={isCurrentPlan ? 'text-green-700' : 'text-gray-700'}>
+                                    {feature}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Action Button */}
+                      {isCurrentPlan ? (
+                        <div className="space-y-3">
+                          <Button
+                            disabled
+                            className="w-full bg-green-100 text-green-800 border-2 border-green-300 cursor-not-allowed font-semibold py-3 hover:bg-green-100"
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Faol reja - Ishlatilmoqda
+                          </Button>
+                          <div className="text-center bg-green-50 rounded-lg p-3 border border-green-200">
+                            <p className="text-xs text-green-700 font-medium">
+                              Bu reja hozirda faol. Boshqa rejaga o'tish yoki yangilash uchun admin bilan bog'laning.
+                            </p>
+                            <div className="mt-2">
+                              <a 
+                                href="https://t.me/talimtizimi_admin" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-green-600 hover:text-green-800 text-xs font-medium underline"
+                              >
+                                Admin bilan bog'lanish
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => handlePlanSelection(plan)}
+                          className={`w-full transform hover:scale-105 transition-all font-semibold py-3 shadow-md hover:shadow-lg ${
+                            index === 1
+                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                        >
+                          <Trophy className="h-4 w-4 mr-2" />
+                          {isLoggedIn ? 'Rejani Tanlash' : 'Kirish va Tanlash'}
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="text-lg text-gray-600 mb-4">Rejalar yuklanmadi</p>
+              <Button
+                onClick={fetchAvailablePlans}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <CardHeader className="text-center">
-                  <CardTitle className="text-3xl font-bold mb-4">{plan.title}</CardTitle>
-                  <CardDescription className="text-gray-600">{plan.price}</CardDescription>
-                </CardHeader>
-                <CardContent className="p-8">
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white transform hover:scale-105 transition-all">
-                    {plan.buttonText}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                <Trophy className="h-4 w-4 mr-2" />
+                Qayta Yuklash
+              </Button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -1303,6 +1558,116 @@ export default function EducationLanding() {
           <ChevronUp className="h-5 w-5" />
         </button>
       </footer>
+
+      {/* Plan Selection Modal */}
+      {showPlanModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in-0">
+          <div data-plan-modal className="bg-white rounded-2xl p-8 m-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-4">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                <Trophy className="h-6 w-6 mr-2 text-blue-600" />
+                Reja Tasdiqlash
+              </h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPlanModal(false)}
+                className="hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Selected Plan Details */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-xl font-semibold text-gray-900">{selectedPlan.name}</h4>
+                  <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1">
+                    <Star className="h-3 w-3 mr-1" />
+                    Tanlangan
+                  </Badge>
+                </div>
+                
+                <div className="mb-4">
+                  <span className="text-3xl font-bold text-blue-600">
+                    {selectedPlan.price.toLocaleString()}
+                  </span>
+                  <span className="text-lg text-gray-600 ml-1">so'm</span>
+                  <span className="text-sm text-gray-500 ml-2">({selectedPlan.duration} kun)</span>
+                </div>
+                
+                <p className="text-gray-700 mb-4">{selectedPlan.description}</p>
+                
+                {/* Plan Limits */}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center space-x-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="font-medium">{selectedPlan.assessments_limit} test</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="font-medium">{selectedPlan.lessons_limit} dars</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="font-medium">{selectedPlan.ai_hints_limit} AI maslahat</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span className="font-medium">{selectedPlan.subjects_limit} fan</span>
+                  </div>
+                </div>
+                
+                {/* Plan Features */}
+                {selectedPlan.features && selectedPlan.features.length > 0 && (
+                  <div>
+                    <h5 className="font-semibold text-gray-900 mb-2">Qo'shimcha imkoniyatlar:</h5>
+                    <ul className="space-y-1">
+                      {selectedPlan.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-center space-x-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirmation Message */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center mb-2">
+                  <MessageCircle className="h-5 w-5 text-yellow-600 mr-2" />
+                  <h5 className="font-semibold text-yellow-800">Keyingi qadam</h5>
+                </div>
+                <p className="text-yellow-700 text-sm">
+                  Tasdiqlashdan so'ng siz Telegram orqali admin bilan bog'lanasiz. 
+                  Admin sizga to'lov jarayoni va reja aktivlashtirish haqida batafsil ma'lumot beradi.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex space-x-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPlanModal(false)}
+                  className="flex-1 border-2 border-gray-300 hover:bg-gray-50"
+                >
+                  Orqaga
+                </Button>
+                <Button
+                  onClick={handleConfirmPlanSelection}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Admin bilan Bog'lanish
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* AI Assistant Component */}
       <AIAssistant />

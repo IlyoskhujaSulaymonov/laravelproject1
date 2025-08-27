@@ -47,7 +47,7 @@ class UserResource extends JsonResource
                 'is_active' => $this->currentPlan->is_active,
             ]),
             'email_verified_at' => $this->email_verified_at,
-            'avatar'   => $this->avatar ?? '/images/avatars/avatar.svg',
+            'avatar'   => $this->avatar,
             'created_at'  => $this->created_at?->toDateTimeString(),
             'updated_at'  => $this->updated_at?->toDateTimeString(),
             'last_login_at' => $this->last_login_at?->toDateTimeString(),

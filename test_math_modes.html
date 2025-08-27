@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Tutor Modes Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .expected { color: green; }
+        .mode { font-weight: bold; color: blue; }
+        .input { font-family: monospace; background: #f5f5f5; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+    <h1>Math Tutor Modes Test</h1>
+    <p>This file shows which expressions should work with which modes after the improvements.</p>
+    
+    <h2>🧮 Solve Mode (Yechish)</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">2x + 3 = 7</span><br>
+        <strong>Expected:</strong> <span class="expected">Linear equation solving with steps</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">x^2 - 5x + 6 = 0</span><br>
+        <strong>Expected:</strong> <span class="expected">Quadratic equation solving with discriminant</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">x^3 - 2x^2 + x - 2 = 0</span><br>
+        <strong>Expected:</strong> <span class="expected">Cubic equation numerical solution</span>
+    </div>
+
+    <h2>📊 Graph Mode (Grafik)</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">y = x^2</span><br>
+        <strong>Expected:</strong> <span class="expected">Parabola graph with controls</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">y = sin(x)</span><br>
+        <strong>Expected:</strong> <span class="expected">Sine wave graph</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">f(x) = ln(x)</span><br>
+        <strong>Expected:</strong> <span class="expected">Natural log graph</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">x^3</span> (in graph mode)<br>
+        <strong>Expected:</strong> <span class="expected">Cubic function graph</span>
+    </div>
+
+    <h2>🔀 Differentiate Mode (Hosila)</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">x^3 + 2x^2 - x + 1</span><br>
+        <strong>Expected:</strong> <span class="expected">3x^2 + 4x - 1</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">sin(x) + cos(x)</span><br>
+        <strong>Expected:</strong> <span class="expected">cos(x) - sin(x)</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">d/dx (e^x)</span><br>
+        <strong>Expected:</strong> <span class="expected">e^x</span>
+    </div>
+
+    <h2>∫ Integrate Mode (Integral)</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">∫ x^2 dx</span><br>
+        <strong>Expected:</strong> <span class="expected">x^3/3 + C</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">∫ sin(x) dx</span><br>
+        <strong>Expected:</strong> <span class="expected">-cos(x) + C</span>
+    </div>
+
+    <h2>🔧 Simplify Mode (Soddalashtirish)</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">(x + 1)^2</span><br>
+        <strong>Expected:</strong> <span class="expected">x^2 + 2x + 1</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">sin^2(x) + cos^2(x)</span><br>
+        <strong>Expected:</strong> <span class="expected">1</span>
+    </div>
+
+    <h2>🧮 Evaluate Mode (Hisoblash)</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">2 + 3 * 4</span><br>
+        <strong>Expected:</strong> <span class="expected">14</span>
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">sqrt(16) + 2^3</span><br>
+        <strong>Expected:</strong> <span class="expected">12</span>
+    </div>
+
+    <h2>🤖 Auto Mode Detection</h2>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">2x + 3 = 7</span> → <span class="mode">SOLVE</span><br>
+        <strong>Reason:</strong> Contains = sign, should solve equation
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">y = x^2</span> → <span class="mode">GRAPH</span><br>
+        <strong>Reason:</strong> Explicit y= format for graphing
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">d/dx (x^3)</span> → <span class="mode">DIFFERENTIATE</span><br>
+        <strong>Reason:</strong> Contains d/dx notation
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">∫ x dx</span> → <span class="mode">INTEGRATE</span><br>
+        <strong>Reason:</strong> Contains integral symbol
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">sin(x) + cos(x)</span> → <span class="mode">SIMPLIFY</span><br>
+        <strong>Reason:</strong> Trigonometric expression for simplification
+    </div>
+    <div class="test-case">
+        <strong>Input:</strong> <span class="input">2 + 3 * 4</span> → <span class="mode">EVALUATE</span><br>
+        <strong>Reason:</strong> Pure arithmetic, no variables
+    </div>
+
+    <h2>❌ Fixed Issues</h2>
+    <div class="test-case" style="background: #f0f8f0;">
+        <strong>Issue:</strong> <span class="input">x^2 - 5x + 6 = 0</span> was being detected as GRAPH instead of SOLVE<br>
+        <strong>Fix:</strong> ✅ Now correctly detected as equation to solve
+    </div>
+    <div class="test-case" style="background: #f0f8f0;">
+        <strong>Issue:</strong> <span class="input">d/dx (x^3)</span> was not working for derivatives<br>
+        <strong>Fix:</strong> ✅ Now correctly processes derivative expressions
+    </div>
+    <div class="test-case" style="background: #f0f8f0;">
+        <strong>Issue:</strong> <span class="input">∫ x^2 dx</span> was not working for integrals<br>
+        <strong>Fix:</strong> ✅ Now correctly processes integral expressions
+    </div>
+
+    <p><strong>Instructions:</strong> Test these expressions in the Math Tutor component to verify all modes are working correctly.</p>
+</body>
+</html>

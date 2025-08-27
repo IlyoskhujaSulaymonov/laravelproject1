@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserTest;
 use App\Models\Topic;
 use App\Models\Question;
 use App\Models\Subject;
+use App\Models\UserSkillLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -112,10 +113,28 @@ class UserTestController extends Controller
             'total_questions' => 'required|integer|min:1',
             'correct_answers' => 'required|integer|min:0',
             'time_spent' => 'nullable|integer|min:0',
-            'questions_data' => 'nullable|array'
+            'questions_data' => 'nullable|array',
+            'test_type' => 'nullable|string|in:practice,assessment,level_finding'
         ]);
 
         $user = Auth::user();
+        
+        // Check if this is an assessment test and if user has remaining assessments
+        if (in_array($request->test_type, ['assessment', 'level_finding'])) {
+            if (!$user->canTakeAssessment()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sizda ushbu oy uchun baholash testlari tugagan. Yangisini olish uchun rejangizni yangilang yoki keyingi oyni kuting.',
+                    'data' => [
+                        'remaining_assessments' => $user->getRemainingAssessments()
+                    ]
+                ], 403);
+            }
+            
+            // Use an assessment
+            $user->currentPlan->useAssessment();
+        }
+
         $scorePercentage = round(($request->correct_answers / $request->total_questions) * 100);
 
         $test = UserTest::create([
@@ -132,12 +151,18 @@ class UserTestController extends Controller
             'difficulty_level' => $request->difficulty_level ?? 'medium',
             'test_type' => $request->test_type ?? 'practice'
         ]);
+        
+        // If this is a level finding test, update user skill level
+        if ($request->test_type === 'level_finding') {
+            $this->updateUserSkillLevel($user, $test);
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Test natijasi muvaffaqiyatli saqlandi!',
             'data' => [
-                'test' => $test->load(['topic'])
+                'test' => $test->load(['topic']),
+                'remaining_assessments' => $user->getRemainingAssessments()
             ]
         ]);
     }
@@ -749,4 +774,120 @@ class UserTestController extends Controller
             'total_tests' => 0
         ];
     }
+
+    /**
+     * Update user skill level based on test result
+     */
+    private function updateUserSkillLevel($user, $test)
+    {
+        $topic = Topic::with('subject')->findOrFail($test->topic_id);
+        $subjectId = $topic->subject->id;
+        
+        // Determine skill level based on score
+        $skillLevel = 'beginner';
+        if ($test->score_percentage >= 85) {
+            $skillLevel = 'advanced';
+        } elseif ($test->score_percentage >= 70) {
+            $skillLevel = 'intermediate';
+        }
+        
+        // Update or create user skill level
+        UserSkillLevel::updateOrCreate(
+            [
+                'user_id' => $user->id,
+                'subject_id' => $subjectId
+            ],
+            [
+                'skill_level' => $skillLevel,
+                'assessment_score' => $test->score_percentage,
+                'last_assessed_at' => now(),
+                'needs_reassessment' => false
+            ]
+        );
+    }
+
+    /**
+     * Check user's assessment limits and skill level status
+     */
+    public function getAssessmentStatus()
+    {
+        $user = Auth::user();
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'can_take_assessment' => $user->canTakeAssessment(),
+                'remaining_assessments' => $user->getRemainingAssessments(),
+                'needs_level_assessment' => $user->needsLevelAssessment(),
+                'has_skill_level' => $user->hasFoundSkillLevel(),
+                'current_plan' => $user->currentPlan ? [
+                    'name' => $user->currentPlan->plan->name,
+                    'assessments_limit' => $user->currentPlan->plan->assessments_limit,
+                    'assessments_used' => $user->currentPlan->assessments_used
+                ] : null
+            ]
+        ]);
+    }
+
+    /**
+     * Start level finding assessment
+     */
+    public function startLevelFindingTest($subjectId)
+    {
+        $user = Auth::user();
+        
+        // Check if user can take assessment
+        if (!$user->canTakeAssessment()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sizda ushbu oy uchun baholash testlari tugagan.'
+            ], 403);
+        }
+        
+        // Get mixed difficulty questions for level assessment
+        $topics = Topic::where('subject_id', $subjectId)
+            ->whereHas('questions')
+            ->with(['questions.variants'])
+            ->get();
+            
+        $questions = collect();
+        
+        // Get questions from different difficulty levels
+        foreach ($topics as $topic) {
+            $topicQuestions = $topic->questions->take(3); // 3 questions per topic
+            $questions = $questions->merge($topicQuestions);
+        }
+        
+        $questions = $questions->take(15)->shuffle(); // Limit to 15 questions
+        
+        $formattedQuestions = $questions->map(function ($question) {
+            return [
+                'id' => $question->id,
+                'question' => $question->question,
+                'formulas' => json_decode($question->formulas, true),
+                'images' => json_decode($question->images, true),
+                'variants' => $question->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'option_letter' => $variant->option_letter,
+                        'text' => $variant->text,
+                        'formulas' => json_decode($variant->formulas, true),
+                        'is_correct' => $variant->is_correct
+                    ];
+                })
+            ];
+        });
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'questions' => $formattedQuestions,
+                'test_type' => 'level_finding',
+                'subject_id' => $subjectId,
+                'message' => 'Bu test sizning bilim darajangizni aniqlash uchun. Barcha savollarga javob bering.'
+            ]
+        ]);
+    }
+
+
 }

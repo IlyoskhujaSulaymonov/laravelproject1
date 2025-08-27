@@ -82,6 +82,11 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('is_active', true);
     }
 
+    public function userPlan()
+    {
+        return $this->currentPlan();
+    }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);
@@ -90,6 +95,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function userTests()
     {
         return $this->hasMany(UserTest::class);
+    }
+
+    public function skillLevels()
+    {
+        return $this->hasMany(UserSkillLevel::class);
     }
 
     public function getBalanceAttribute()
@@ -135,5 +145,45 @@ class User extends Authenticatable implements MustVerifyEmail
                 }
             }
         });
+    }
+
+    // Check if user has found their skill level for any subject
+    public function hasFoundSkillLevel()
+    {
+        return $this->skillLevels()->exists();
+    }
+
+    // Get skill level for a specific subject
+    public function getSkillLevel($subjectId)
+    {
+        return $this->skillLevels()->where('subject_id', $subjectId)->first();
+    }
+
+    // Check if user needs to find their level (no skill levels recorded)
+    public function needsLevelAssessment()
+    {
+        return !$this->hasFoundSkillLevel();
+    }
+
+    // Can take assessment test (within plan limits)
+    public function canTakeAssessment()
+    {
+        $currentPlan = $this->currentPlan;
+        if (!$currentPlan) {
+            return false;
+        }
+        
+        return $currentPlan->canTakeAssessment();
+    }
+
+    // Get remaining assessments for current month
+    public function getRemainingAssessments()
+    {
+        $currentPlan = $this->currentPlan;
+        if (!$currentPlan) {
+            return 0;
+        }
+        
+        return $currentPlan->getRemainingAssessments();
     }
 }
