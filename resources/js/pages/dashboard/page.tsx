@@ -673,18 +673,99 @@ export default function UserDashboard() {
     setSelectedPlan(plan)
   }
 
-  const handleConfirmPlanSelection = () => {
+  const handleConfirmPlanSelection = async () => {
     if (selectedPlan) {
-      // Create a message for the admin with selected plan details
-      const message = `Salom! Men ${selectedPlan.name} rejasini tanlashni xohlayman.\n\nReja tafsilotlari:\n- Nomi: ${selectedPlan.name}\n- Narxi: ${selectedPlan.price > 0 ? selectedPlan.price.toLocaleString() + ' so\'m' : 'Bepul'}\n- Muddati: ${selectedPlan.duration > 0 ? selectedPlan.duration + ' kun' : 'Cheksiz'}\n- Testlar: ${selectedPlan.assessments_limit === 999 ? 'Cheksiz' : selectedPlan.assessments_limit}\n- Darslar: ${selectedPlan.lessons_limit === -1 ? 'Cheksiz' : selectedPlan.lessons_limit}\n- AI yordami: ${selectedPlan.ai_hints_limit === -1 ? 'Cheksiz' : selectedPlan.ai_hints_limit}\n\nIltimos, bu rejani faollashtiring.`
-      
-      const encodedMessage = encodeURIComponent(message)
-      const telegramUrl = `https://t.me/your_bot_username?start=upgrade_plan&text=${encodedMessage}`
-      
-      // Close modal and redirect to Telegram
-      setShowPlanModal(false)
-      setSelectedPlan(null)
-      window.open(telegramUrl, '_blank')
+      try {
+        // Show loading state
+        setPlansLoading(true)
+        
+        // Get CSRF token
+        const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
+        const csrfToken = csrfTokenElement?.content || ''
+
+        // First, check if user has connected their Telegram account
+        // If not, prompt them to go to the Telegram bot
+        if (!userData.telegram_chat_id) {
+          const goToBot = confirm("Telegram hisobingizni bog'lash uchun bizning Telegram botimizga o'tishingiz kerak. Hozir o'tishni xohlaysizmi?")
+          
+          if (goToBot) {
+            // Open Telegram bot in new tab using your specific bot username
+            const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'math_ai_integrator_bot'
+            window.open(`https://t.me/${botUsername}`, '_blank')
+            
+            // Wait a moment for user to get their chat ID
+            alert("Telegram botga o'tdingiz. Botdan yuborilgan xabardagi chat ID ni nusxalab oling va keyingi qadamda kiriting.")
+            
+            // Prompt for chat ID after they've had time to get it
+            const telegramChatId = prompt("Endi chat ID ni kiriting (Telegram bot xabarida ko'rsatilgan):")
+            
+            if (!telegramChatId) {
+              alert("Chat ID ni kiritishingiz kerak!")
+              setPlansLoading(false)
+              return
+            }
+
+            // Connect Telegram account
+            const connectResponse = await fetch("/api/telegram/connect-account", {
+              method: "POST",
+              headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRF-TOKEN": csrfToken,
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                telegram_chat_id: telegramChatId
+              })
+            })
+
+            const connectData = await connectResponse.json()
+            
+            if (!connectData.success) {
+              alert(connectData.message || "Telegram hisobingizni bog'lashda xatolik yuz berdi.")
+              setPlansLoading(false)
+              return
+            }
+          } else {
+            alert("Telegram hisobingizni bog'lash uchun chat ID kerak!")
+            setPlansLoading(false)
+            return
+          }
+        }
+
+        // Send request to our API endpoint
+        const response = await fetch("/api/telegram/request-plan-purchase", {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRF-TOKEN": csrfToken,
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            plan_id: selectedPlan.id
+          })
+        })
+
+        const data = await response.json()
+        
+        if (data.success) {
+          // Show success message
+          alert("So'rovingiz yuborildi! Admin tez orada siz bilan bog'lanadi.")
+        } else {
+          // Show error message
+          alert(data.message || "So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+        }
+      } catch (error) {
+        console.error("Error requesting plan purchase:", error)
+        alert("So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+      } finally {
+        setPlansLoading(false)
+        setShowPlanModal(false)
+        setSelectedPlan(null)
+      }
     }
   }
 

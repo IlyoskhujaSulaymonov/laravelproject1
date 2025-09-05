@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Admin\SampleQuestionController;
 use App\Http\Controllers\Admin\TopicController;
 use App\Http\Controllers\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
@@ -16,7 +17,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\UserPlanController;
-use App\Models\Question;
+use App\Http\Controllers\Admin\UserTestController as AdminUserTestController;
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');
@@ -60,6 +61,18 @@ Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.
      Route::get('questions/show/{topic}/{question}', [QuestionController::class, 'show'])->name('questions.show');
 });
 
+// Sample Questions (Na'munaviy savollar) Routes
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
+    Route::get('sample-questions/subjects/list', [SampleQuestionController::class, 'subjectList'])->name('sample-questions.subject.list');
+    Route::get('sample-questions/{subject}', [SampleQuestionController::class, 'index'])->name('sample-questions.index');
+    Route::get('sample-questions/create/{subject}', [SampleQuestionController::class, 'create'])->name('sample-questions.create');
+    Route::post('sample-questions/{subject}', [SampleQuestionController::class, 'store'])->name('sample-questions.store');
+    Route::get('sample-questions/edit/{subject}/{question}', [SampleQuestionController::class, 'edit'])->name('sample-questions.edit');
+    Route::put('sample-questions/{subject}/{question}', [SampleQuestionController::class, 'update'])->name('sample-questions.update');
+    Route::delete('sample-questions/{subject}/{question}', [SampleQuestionController::class, 'destroy'])->name('sample-questions.destroy');
+    Route::get('sample-questions/show/{subject}/{question}', [SampleQuestionController::class, 'show'])->name('sample-questions.show');
+});
+
 Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
     Route::resource('users', UserController::class);
 });
@@ -82,6 +95,21 @@ Route::prefix('admin')->middleware(['auth', 'role:admin'])->name('admin.')->grou
 
 Route::prefix('admin')->middleware(['auth','role:admin'])->name('admin.')->group(function () {
     Route::resource('payments', PaymentController::class);
+});
+
+// User Tests Management Routes
+Route::prefix('admin')->middleware(['auth', 'role:admin,teacher'])->name('admin.')->group(function () {
+    Route::get('user-tests', [AdminUserTestController::class, 'index'])->name('user-tests.index');
+    Route::get('user-tests/{userTest}', [AdminUserTestController::class, 'show'])->name('user-tests.show');
+    Route::delete('user-tests/{userTest}', [AdminUserTestController::class, 'destroy'])->name('user-tests.destroy');
+    Route::get('user-tests-analytics', [AdminUserTestController::class, 'analytics'])->name('user-tests.analytics');
+
+    // Plan Purchase Requests Routes
+    Route::get('plan-purchase-requests', [PlanPurchaseRequestController::class, 'index'])->name('plan-purchase-requests.index');
+    Route::get('plan-purchase-requests/{planPurchaseRequest}', [PlanPurchaseRequestController::class, 'show'])->name('plan-purchase-requests.show');
+    Route::put('plan-purchase-requests/{planPurchaseRequest}', [PlanPurchaseRequestController::class, 'update'])->name('plan-purchase-requests.update');
+    Route::delete('plan-purchase-requests/{planPurchaseRequest}', [PlanPurchaseRequestController::class, 'destroy'])->name('plan-purchase-requests.destroy');
+    Route::get('user-tests-export', [AdminUserTestController::class, 'export'])->name('user-tests.export');
 });
 
 

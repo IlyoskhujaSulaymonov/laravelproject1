@@ -6,54 +6,29 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
 import {
   GraduationCap,
   BookOpen,
-  Users,
   Trophy,
-  Target,
   PlayCircle,
   CheckCircle,
   MessageCircle,
-  Clock,
   Award,
   ChevronDown,
-  ChevronUp,
   Brain,
-  Zap,
-  TrendingUp,
   Star,
-  Lightbulb,
   BarChart3,
-  Rocket,
   Shield,
-  Smartphone,
-  PieChart,
   Menu,
   X,
   ArrowRight,
   Sparkles,
   Play,
   UserCheck,
-  Phone,
-  Mail,
-  MapPin,
-  Facebook,
-  Twitter,
-  Instagram,
-  Youtube,
-  Linkedin,
-  Send,
-  FileText,
-  HelpCircle,
-  Settings,
-  ExternalLink,
   User,
   LogOut,
-  AlertTriangle,
 } from "lucide-react"
 import AIAssistant from "@/components/ai-assistant"
 
@@ -68,19 +43,22 @@ export default function EducationLanding() {
   const [email, setEmail] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showPlanModal, setShowPlanModal] = useState(false)
-  const [availablePlans, setAvailablePlans] = useState<Array<{
-    id: number
-    name: string
-    slug: string
-    description: string
-    price: number
-    duration: number
-    features: string[]
-    assessments_limit: number
-    lessons_limit: number
-    ai_hints_limit: number
-    subjects_limit: number
-  }>>([])
+  const [showMobileNav, setShowMobileNav] = useState(false)
+  const [availablePlans, setAvailablePlans] = useState<
+    Array<{
+      id: number
+      name: string
+      slug: string
+      description: string
+      price: number
+      duration: number
+      features: string[]
+      assessments_limit: number
+      lessons_limit: number
+      ai_hints_limit: number
+      subjects_limit: number
+    }>
+  >([])
   const [selectedPlan, setSelectedPlan] = useState<{
     id: number
     name: string
@@ -99,7 +77,6 @@ export default function EducationLanding() {
 
   const { isLoggedIn, user, loading, logout } = useAuth()
 
-  // Animated counters
   useEffect(() => {
     const studentTimer = setInterval(() => {
       setStudentCount((prev) => (prev < 10000 ? prev + 100 : 10000))
@@ -120,31 +97,28 @@ export default function EducationLanding() {
     }
   }, [])
 
-  // Scroll effect
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element
-      if (!target.closest('[data-dropdown]')) {
+      if (!target.closest("[data-dropdown]")) {
         setShowUserMenu(false)
         setIsMenuOpen(false)
       }
-      if (!target.closest('[data-plan-modal]')) {
+      if (!target.closest("[data-plan-modal]")) {
         setShowPlanModal(false)
       }
     }
-    
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Auto-fetch plans on component mount
   useEffect(() => {
     fetchAvailablePlans()
   }, [])
@@ -159,78 +133,75 @@ export default function EducationLanding() {
       element.scrollIntoView({ behavior: "smooth" })
       setActiveSection(sectionId)
       setIsMenuOpen(false)
+      setShowMobileNav(false)
     }
   }
 
   const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle newsletter subscription
     console.log("Newsletter subscription:", email)
     setEmail("")
   }
 
   const handleLogout = async () => {
-    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
-    const csrfToken = csrfTokenElement?.content || ''
-
     try {
-      await fetch("/logout", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-          "X-CSRF-TOKEN": csrfToken,
-        },
-        credentials: "include",
-      })
+      await logout()
+      window.location.href = "/"
     } catch (err) {
       console.error("Logout error:", err)
-    } finally {
-      window.location.href = "/"
     }
   }
 
-  // Fetch available plans with current plan detection
   const fetchAvailablePlans = async () => {
     setPlansLoading(true)
     try {
-      const response = await fetch("/api/plans", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          "X-Requested-With": "XMLHttpRequest",
+      // Simulate API call with mock data
+      const mockPlans = [
+        {
+          id: 1,
+          name: "Boshlang'ich",
+          slug: "basic",
+          description: "Asosiy imkoniyatlar bilan tanishish",
+          price: 0,
+          duration: 7,
+          features: ["Asosiy testlar", "Video darsliklar"],
+          assessments_limit: 5,
+          lessons_limit: 10,
+          ai_hints_limit: 3,
+          subjects_limit: 2,
         },
-        credentials: "include",
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setAvailablePlans(data.data)
-          
-          // Get user's current plan to make it unselectable
-          if (isLoggedIn && user) {
-            try {
-              const userPlanResponse = await fetch("/api/user-plan/current", {
-                method: "GET",
-                headers: {
-                  Accept: "application/json",
-                  "X-Requested-With": "XMLHttpRequest",
-                },
-                credentials: "include",
-              })
-              
-              if (userPlanResponse.ok) {
-                const userPlanData = await userPlanResponse.json()
-                if (userPlanData.success && userPlanData.data) {
-                  setCurrentPlanSlug(userPlanData.data.slug)
-                }
-              }
-            } catch (error) {
-              console.log("Could not fetch user plan:", error)
-            }
-          }
-        }
+        {
+          id: 2,
+          name: "Standart",
+          slug: "standard",
+          description: "To'liq imkoniyatlar bilan o'qish",
+          price: 50000,
+          duration: 30,
+          features: ["Barcha testlar", "AI yordamchi", "Shaxsiy mentor"],
+          assessments_limit: 50,
+          lessons_limit: 100,
+          ai_hints_limit: 50,
+          subjects_limit: 5,
+        },
+        {
+          id: 3,
+          name: "Premium",
+          slug: "premium",
+          description: "Cheksiz imkoniyatlar",
+          price: 100000,
+          duration: 90,
+          features: ["Cheksiz testlar", "24/7 AI yordam", "Sertifikat"],
+          assessments_limit: 999,
+          lessons_limit: 999,
+          ai_hints_limit: 999,
+          subjects_limit: 10,
+        },
+      ]
+
+      setAvailablePlans(mockPlans)
+
+      if (isLoggedIn && user) {
+        setCurrentPlanSlug("basic") // Mock current plan
       }
     } catch (error) {
       console.error("Error fetching plans:", error)
@@ -239,10 +210,8 @@ export default function EducationLanding() {
     }
   }
 
-  const handlePlanSelection = async (plan: typeof availablePlans[0]) => {
-    // Check if user is logged in
+  const handlePlanSelection = async (plan: (typeof availablePlans)[0]) => {
     if (!isLoggedIn) {
-      // Redirect to login page
       window.location.href = "/login"
       return
     }
@@ -254,13 +223,113 @@ export default function EducationLanding() {
   const handleConfirmPlanSelection = async () => {
     if (!selectedPlan) return
 
-    const message = `Salom! Men ${selectedPlan.name} rejasini tanlashni xohlayman.\n\nReja tafsilotlari:\n• Nomi: ${selectedPlan.name}\n• Narx: ${selectedPlan.price.toLocaleString()} so'm/${selectedPlan.duration} kun\n• Tavsif: ${selectedPlan.description}\n\nIltimos, bu reja haqida batafsil ma'lumot bering va to'lov jarayoni haqida tushuntiring.`
-    
-    const telegramUrl = `https://t.me/talimtizimi_admin?text=${encodeURIComponent(message)}`
-    window.open(telegramUrl, "_blank")
-    
-    setShowPlanModal(false)
-    setSelectedPlan(null)
+    if (!isLoggedIn) {
+      window.location.href = "/login"
+      return
+    }
+
+    try {
+      setPlansLoading(true)
+
+      // Get CSRF token
+      const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
+      const csrfToken = csrfTokenElement?.content || ''
+
+      // Get user data to check if Telegram is connected
+      const userResponse = await fetch("/user/data", {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        credentials: "include",
+      })
+
+      const userData = await userResponse.json()
+
+      // First, check if user has connected their Telegram account
+      // If not, prompt them to go to the Telegram bot
+      if (!userData.telegram_chat_id) {
+        const goToBot = confirm("Telegram hisobingizni bog'lash uchun bizning Telegram botimizga o'tishingiz kerak. Hozir o'tishni xohlaysizmi?")
+        
+        if (goToBot) {
+          // Open Telegram bot in new tab using your specific bot username
+          const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'math_ai_integrator_bot'
+          window.open(`https://t.me/${botUsername}`, '_blank')
+          
+          // Wait a moment for user to get their chat ID
+          alert("Telegram botga o'tdingiz. Botdan yuborilgan xabardagi chat ID ni nusxalab oling va keyingi qadamda kiriting.")
+          
+          // Prompt for chat ID after they've had time to get it
+          const telegramChatId = prompt("Endi chat ID ni kiriting (Telegram bot xabarida ko'rsatilgan):")
+          
+          if (!telegramChatId) {
+            alert("Chat ID ni kiritishingiz kerak!")
+            setPlansLoading(false)
+            return
+          }
+
+          // Connect Telegram account
+          const connectResponse = await fetch("/api/telegram/connect-account", {
+            method: "POST",
+            headers: {
+              "Accept": "application/json",
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRF-TOKEN": csrfToken,
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              telegram_chat_id: telegramChatId
+            })
+          })
+
+          const connectData = await connectResponse.json()
+          
+          if (!connectData.success) {
+            alert(connectData.message || "Telegram hisobingizni bog'lashda xatolik yuz berdi.")
+            setPlansLoading(false)
+            return
+          }
+        } else {
+          alert("Telegram hisobingizni bog'lash uchun chat ID kerak!")
+          setPlansLoading(false)
+          return
+        }
+      }
+
+      // Send request to our API endpoint
+      const response = await fetch("/api/telegram/request-plan-purchase", {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrfToken,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          plan_id: selectedPlan.id
+        })
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        // Show success message
+        alert("So'rovingiz yuborildi! Admin tez orada siz bilan bog'lanadi.")
+      } else {
+        // Show error message
+        alert(data.message || "So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+      }
+    } catch (error) {
+      console.error("Error requesting plan purchase:", error)
+      alert("So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+    } finally {
+      setPlansLoading(false)
+      setShowPlanModal(false)
+      setSelectedPlan(null)
+    }
   }
 
   const navItems = [
@@ -282,13 +351,15 @@ export default function EducationLanding() {
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
-            {/* Enhanced Logo with Hover Animations */}
-            <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => scrollToSection('home')}>
+            {/* Enhanced Logo */}
+            <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => scrollToSection("home")}>
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg group-hover:shadow-xl">
                 <GraduationCap className="h-8 w-8 text-white group-hover:animate-pulse" />
               </div>
               <div>
-                <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-blue-600 transition-all duration-300">Ta'lim Tizimi</h1>
+                <h1 className="text-2xl font-serif font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent group-hover:from-purple-600 group-hover:to-blue-600 transition-all duration-300">
+                  Ta'lim Tizimi
+                </h1>
                 <p className="text-xs text-muted-foreground flex items-center group-hover:text-blue-600 transition-colors duration-300">
                   <Brain className="h-3 w-3 mr-1 group-hover:animate-spin" />
                   AI bilan bilim olish
@@ -296,7 +367,7 @@ export default function EducationLanding() {
               </div>
             </div>
 
-            {/* Desktop Navigation with Enhanced Animations */}
+            {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-8">
               {navItems.map((item, index) => (
                 <button
@@ -311,7 +382,6 @@ export default function EducationLanding() {
                   }`}
                   style={{
                     animationDelay: `${index * 100}ms`,
-                    animation: 'fadeInUp 0.6s ease-out forwards'
                   }}
                 >
                   <item.icon className="h-4 w-4" />
@@ -320,6 +390,7 @@ export default function EducationLanding() {
               ))}
             </nav>
 
+            {/* Desktop Auth Section */}
             <div className="hidden lg:flex items-center space-x-4">
               {loading ? (
                 <div className="flex items-center space-x-2">
@@ -341,7 +412,10 @@ export default function EducationLanding() {
                         </Button>
                       </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-md border border-gray-200 shadow-xl">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-56 bg-white/95 backdrop-blur-md border border-gray-200 shadow-xl"
+                    >
                       <DropdownMenuItem className="hover:bg-blue-50 cursor-pointer">
                         <a href="/user/dashboard" className="flex items-center w-full">
                           <BarChart3 className="h-4 w-4 mr-2 text-blue-600" />
@@ -354,7 +428,10 @@ export default function EducationLanding() {
                           <span className="font-medium">Profil</span>
                         </a>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleLogout} className="hover:bg-red-50 cursor-pointer border-t border-gray-100 mt-1">
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="hover:bg-red-50 cursor-pointer border-t border-gray-100 mt-1"
+                      >
                         <LogOut className="h-4 w-4 mr-2 text-red-600" />
                         <span className="font-medium text-red-600">Chiqish</span>
                       </DropdownMenuItem>
@@ -380,117 +457,121 @@ export default function EducationLanding() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Navigation Button */}
             <button
-              className="lg:hidden p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="lg:hidden flex items-center space-x-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform hover:scale-105 transition-all duration-300"
+              onClick={() => setShowMobileNav(!showMobileNav)}
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              <Menu className="h-4 w-4" />
             </button>
           </div>
-
-          {/* Enhanced Mobile Navigation */}
-          {isMenuOpen && (
-            <div className="lg:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-border shadow-xl animate-in slide-in-from-top-4 duration-300">
-              <div className="container mx-auto px-4 py-6">
-                <nav className="space-y-4">
-                  {navItems.map((item, index) => (
-                    <button
-                      key={item.id}
-                      onClick={() => scrollToSection(item.id)}
-                      className={`flex items-center space-x-3 w-full px-4 py-3 rounded-lg transition-all duration-300 transform hover:scale-102 ${
-                        activeSection === item.id
-                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg"
-                          : "text-foreground hover:text-primary hover:bg-muted hover:shadow-md"
-                      }`}
-                      style={{
-                        animationDelay: `${index * 50}ms`,
-                        animation: 'slideInLeft 0.4s ease-out forwards'
-                      }}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  ))}
-
-                  <div className="pt-4 border-t border-border space-y-3">
-                    {loading ? (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                        <span className="ml-2 text-sm text-muted-foreground">Yuklanmoqda...</span>
-                      </div>
-                    ) : isLoggedIn ? (
-                      <div className="space-y-3">
-                        <div className="text-center py-2">
-                          <p className="text-sm font-medium text-gray-700">{user?.name || "Foydalanuvchi"}</p>
-                        </div>
-                        
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
-                          asChild
-                        >
-                          <a href="/user/dashboard">
-                            <BarChart3 className="h-4 w-4 mr-2" />
-                            Dashboard
-                          </a>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
-                          asChild
-                        >
-                          <a href="/user/profile">
-                            <User className="h-4 w-4 mr-2" />
-                            Profil
-                          </a>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
-                          onClick={handleLogout}
-                        >
-                          <LogOut className="h-4 w-4 mr-2" />
-                          Chiqish
-                        </Button>
-                      </div>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
-                          onClick={() => (window.location.href = "/login")}
-                        >
-                          Kirish
-                        </Button>
-                        <Button
-                          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                          onClick={() => (window.location.href = "/register")}
-                        >
-                          Ro'yxatdan o'tish
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </nav>
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
-      {/* Enhanced Hero Section */}
-      <section id="home" className="pt-60 pb-20 px-4 relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      {/* Mobile Navigation Menu */}
+      {showMobileNav && (
+        <nav className="fixed top-20 left-0 right-0 z-40 bg-card/95 backdrop-blur-md shadow-lg border-b border-border">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col items-center space-y-4 py-4">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    scrollToSection(item.id)
+                    setShowMobileNav(false)
+                  }}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${
+                    activeSection === item.id
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-105"
+                      : "text-foreground hover:text-primary hover:bg-muted hover:shadow-md"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+
+              {/* Mobile Auth Section */}
+              <div className="pt-4 border-t border-border space-y-3 w-full">
+                {loading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">Yuklanmoqda...</span>
+                  </div>
+                ) : isLoggedIn ? (
+                  <div className="space-y-3">
+                    <div className="text-center py-2">
+                      <p className="text-sm font-medium text-gray-700">{user?.name || "Foydalanuvchi"}</p>
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
+                      asChild
+                    >
+                      <a href="/user/dashboard">
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
+                      asChild
+                    >
+                      <a href="/user/profile">
+                        <User className="h-4 w-4 mr-2" />
+                        Profil
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition-all duration-300 font-semibold bg-transparent"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Chiqish
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="w-full border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-semibold bg-transparent"
+                      onClick={() => (window.location.href = "/login")}
+                    >
+                      Kirish
+                    </Button>
+                    <Button
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                      onClick={() => (window.location.href = "/register")}
+                    >
+                      Ro'yxatdan o'tish
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+      )}
+
+      {/* Hero Section */}
+      <section
+        id="home"
+        className="pt-32 pb-20 px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden"
+      >
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute top-20 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
         </div>
 
         <div className="container mx-auto text-center relative z-10">
           <div className="max-w-5xl mx-auto">
             {/* Animated Badge */}
-            <div className="flex items-center justify-center mb-8 animate-in fade-in-50 slide-in-from-top-4">
+            <div className="flex items-center justify-center mb-8">
               <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 text-lg animate-bounce">
                 <Brain className="h-5 w-5 mr-2" />
                 Sun'iy Intellekt Texnologiyasi
@@ -498,23 +579,23 @@ export default function EducationLanding() {
               </Badge>
             </div>
 
-            {/* Main Heading with Animation */}
-            <h2 className="text-6xl md:text-7xl font-bold text-gray-900 mb-8 animate-in fade-in-50 slide-in-from-bottom-4 delay-200">
+            {/* Main Heading */}
+            <h2 className="text-6xl md:text-7xl font-bold text-gray-900 mb-8">
               Zamonaviy Ta'lim Tizimi
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 animate-gradient-x">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600">
                 AI Yordamida
               </span>
             </h2>
 
-            {/* Enhanced Description */}
-            <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed max-w-4xl mx-auto animate-in fade-in-50 slide-in-from-bottom-4 delay-300">
+            {/* Description */}
+            <p className="text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed max-w-4xl mx-auto">
               O'quvchilar va abituriyentlar uchun sun'iy intellekt texnologiyasi bilan ishlab chiqilgan interaktiv
               ta'lim platformasi. Darajangizni AI yordamida aniqlang, bilimingizni mustahkamlang va maqsadingizga
               erishing!
             </p>
 
             {/* Interactive Stats */}
-            <div className="grid md:grid-cols-3 gap-8 mb-12 animate-in fade-in-50 slide-in-from-bottom-4 delay-400">
+            <div className="grid md:grid-cols-3 gap-8 mb-12">
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
                 <div className="text-4xl font-bold text-blue-600 mb-2">{studentCount.toLocaleString()}+</div>
                 <div className="text-gray-600">Faol O'quvchilar</div>
@@ -547,8 +628,8 @@ export default function EducationLanding() {
               </div>
             </div>
 
-            {/* Enhanced CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 justify-center animate-in fade-in-50 slide-in-from-bottom-4 delay-500">
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-xl px-10 py-6 transform hover:scale-105 transition-all shadow-lg hover:shadow-xl group"
@@ -569,7 +650,7 @@ export default function EducationLanding() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="mt-16 flex flex-wrap justify-center items-center gap-8 opacity-70 animate-in fade-in-50 slide-in-from-bottom-4 delay-700">
+            <div className="mt-16 flex flex-wrap justify-center items-center gap-8 opacity-70">
               <div className="flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-green-600" />
                 <span className="text-sm font-medium">SSL Himoyalangan</span>
@@ -587,29 +668,22 @@ export default function EducationLanding() {
         </div>
       </section>
 
-      {/* Enhanced AI Features Banner */}
       <section
         id="features"
         className="py-20 px-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white relative overflow-hidden"
       >
-        {/* Animated Background Elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-0 w-full h-full opacity-20">
             <div className="absolute top-10 left-10 w-4 h-4 bg-white/20 rounded-full animate-pulse"></div>
             <div className="absolute top-20 right-20 w-3 h-3 bg-white/30 rounded-full animate-pulse delay-1000"></div>
             <div className="absolute bottom-20 left-20 w-5 h-5 bg-white/20 rounded-full animate-pulse delay-500"></div>
-            <div className="absolute bottom-10 right-10 w-2 h-2 bg-white/40 rounded-full animate-pulse delay-1500"></div>
-            <div className="absolute top-1/2 left-1/4 w-3 h-3 bg-white/25 rounded-full animate-pulse delay-700"></div>
-            <div className="absolute top-1/3 right-1/3 w-4 h-4 bg-white/20 rounded-full animate-pulse delay-300"></div>
           </div>
         </div>
 
         <div className="container mx-auto relative z-10">
           <div className="text-center mb-16">
-            <h3 className="text-5xl font-bold mb-6 animate-in fade-in-50 slide-in-from-top-4">
-              AI Platformaning Kuchi
-            </h3>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto animate-in fade-in-50 slide-in-from-top-4 delay-200">
+            <h3 className="text-5xl font-bold mb-6">AI Platformaning Kuchi</h3>
+            <p className="text-xl text-white/90 max-w-3xl mx-auto">
               Sun'iy intellekt texnologiyasi bilan ta'lim sohasida inqilob yaratmoqdamiz
             </p>
           </div>
@@ -623,22 +697,19 @@ export default function EducationLanding() {
                 features: ["25 ta maxsus test", "Real-time tahlil", "Aniq natijalar"],
               },
               {
-                icon: TrendingUp,
+                icon: BarChart3,
                 title: "Shaxsiy Ta'lim Yo'li",
                 description: "AI sizning ehtiyojlaringizga moslashtirilgan dastur",
                 features: ["Individual yondashuv", "Adaptiv o'qitish", "Maqsadli tayyorgarlik"],
               },
               {
-                icon: Zap,
+                icon: Trophy,
                 title: "Tezkor Natijalar",
                 description: "Darhol tahlil va tavsiyalar olish",
                 features: ["Instant feedback", "24/7 mavjudlik", "Tezkor javoblar"],
               },
             ].map((feature, index) => (
-              <div
-                key={index}
-                className={`group animate-in fade-in-50 slide-in-from-bottom-4 delay-${(index + 1) * 200}`}
-              >
+              <div key={index} className="group">
                 <Card className="bg-white/10 backdrop-blur-md border-white/20 text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-105 hover:-translate-y-2">
                   <CardContent className="p-8 text-center">
                     <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
@@ -662,132 +733,18 @@ export default function EducationLanding() {
         </div>
       </section>
 
-      {/* Interactive Demo Section */}
-      <section className="py-20 px-4 bg-white">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-gray-900 mb-6">AI Tizimini Sinab Ko'ring</h3>
-            <p className="text-xl text-gray-600">Interaktiv demo orqali platformamizning imkoniyatlarini kashf eting</p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Interactive Demo Card */}
-            <div className="relative">
-              <Card className="bg-gradient-to-br from-blue-600 to-purple-600 text-white overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16 animate-pulse"></div>
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12 animate-pulse delay-1000"></div>
-
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-white/20 p-3 rounded-full mr-4 animate-bounce">
-                      <Brain className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <Badge className="bg-white/20 text-white mb-2">AI Powered</Badge>
-                      <h4 className="text-2xl font-bold">Test Ishlang va Darajangizni Aniqlang!</h4>
-                    </div>
-                  </div>
-
-                  <p className="text-lg mb-6 text-white/90">
-                    Sun'iy intellekt texnologiyasi yordamida sizning bilim darajangizni aniq baholash va shaxsiy ta'lim
-                    dasturini tayyorlash
-                  </p>
-
-                  <div className="space-y-4 mb-8">
-                    {[
-                      "25 ta maxsus darajalangan test",
-                      "AI tomonidan avtomatik tahlil",
-                      "Shaxsiy ta'lim yo'li tavsiyasi",
-                      "Real-time natija kuzatuvi",
-                    ].map((feature, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center animate-in slide-in-from-left-4"
-                        style={{ animationDelay: `${index * 200}ms` }}
-                      >
-                        <CheckCircle className="h-5 w-5 mr-3 text-green-300" />
-                        <span>{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex space-x-4">
-                    <Button className="bg-white text-blue-600 hover:bg-gray-100 font-semibold flex-1 group">
-                      <Rocket className="h-4 w-4 mr-2 group-hover:animate-pulse" />
-                      Hoziroq Boshlash
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="border-white text-white hover:bg-white hover:text-blue-600 group bg-transparent"
-                    >
-                      <Play className="h-4 w-4 group-hover:scale-110 transition-transform" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Analytics Demo */}
-            <div>
-              <Card className="bg-gradient-to-br from-green-500 to-emerald-600 text-white overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-2xl">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-20 translate-x-20 animate-pulse"></div>
-
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex items-center mb-6">
-                    <div className="bg-white/20 p-3 rounded-full mr-4 animate-pulse">
-                      <BarChart3 className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <Badge className="bg-white/20 text-white mb-2">Smart Analytics</Badge>
-                      <h4 className="text-2xl font-bold">Aqlli Tahlil va Hisobotlar</h4>
-                    </div>
-                  </div>
-
-                  <p className="text-lg mb-6 text-white/90">
-                    Sizning o'sish dinamikangizni kuzatib boring va AI tavsiyalari asosida bilimingizni yanada
-                    mustahkamlang
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white/20 p-4 rounded-lg text-center transform hover:scale-105 transition-transform">
-                      <PieChart className="h-6 w-6 mx-auto mb-2" />
-                      <div className="text-2xl font-bold">{accuracyCount}%</div>
-                      <div className="text-sm">Aniqlik</div>
-                    </div>
-                    <div className="bg-white/20 p-4 rounded-lg text-center transform hover:scale-105 transition-transform">
-                      <TrendingUp className="h-6 w-6 mx-auto mb-2" />
-                      <div className="text-2xl font-bold">24/7</div>
-                      <div className="text-sm">Mavjudlik</div>
-                    </div>
-                  </div>
-
-                  <Button className="w-full bg-white text-green-600 hover:bg-gray-100 font-semibold group">
-                    <BarChart3 className="h-4 w-4 mr-2 group-hover:animate-pulse" />
-                    Hisobotni Ko'rish
-                    <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Enhanced Main Sections */}
       <section id="sections" className="py-20 px-4 bg-gray-50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-gray-900 mb-6 animate-in fade-in-50 slide-in-from-top-4">
-              Ta'lim Bo'limlari
-            </h3>
-            <p className="text-xl text-gray-600 animate-in fade-in-50 slide-in-from-top-4 delay-200">
+            <h3 className="text-4xl font-bold text-gray-900 mb-6">Ta'lim Bo'limlari</h3>
+            <p className="text-xl text-gray-600">
               O'zingizga mos bo'limni tanlang va AI yordamida ta'lim jarayonini boshlang
             </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Enhanced O'quvchi Bo'limi */}
-            <Card className="group hover:shadow-2xl transition-all duration-500 border-2 hover:border-blue-200 relative overflow-hidden transform hover:scale-105 animate-in fade-in-50 slide-in-from-left-4">
+            {/* O'quvchi Bo'limi */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 border-2 hover:border-blue-200 relative overflow-hidden transform hover:scale-105">
               <div className="absolute top-4 right-4 z-10">
                 <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white animate-pulse">
                   <Brain className="h-3 w-3 mr-1" />
@@ -795,7 +752,6 @@ export default function EducationLanding() {
                 </Badge>
               </div>
 
-              {/* Animated Background */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-50 to-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
               <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg relative overflow-hidden">
@@ -803,7 +759,7 @@ export default function EducationLanding() {
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center space-x-3">
                     <div className="bg-white/20 p-2 rounded-full group-hover:animate-bounce">
-                      <Users className="h-8 w-8" />
+                      <BookOpen className="h-8 w-8" />
                     </div>
                     <div>
                       <CardTitle className="text-2xl">I. O'quvchi Bo'limi</CardTitle>
@@ -822,10 +778,7 @@ export default function EducationLanding() {
                     "AI avtomatik tekshiruv va natija tahlili",
                     "Abituriyent bo'limiga silliq o'tish",
                   ].map((feature, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-start space-x-3 animate-in slide-in-from-left-4 delay-${index * 100}`}
-                    >
+                    <div key={index} className="flex items-start space-x-3">
                       <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0 group-hover:animate-pulse" />
                       <p className="text-gray-700">{feature}</p>
                     </div>
@@ -839,14 +792,14 @@ export default function EducationLanding() {
                   <BookOpen className="h-4 w-4 mr-2 group-hover:animate-bounce" />
                   O'quvchi bo'limiga kirish
                   {expandedSection === "student" ? (
-                    <ChevronUp className="h-4 w-4 ml-2 group-hover:animate-bounce" />
+                    <ChevronDown className="h-4 w-4 ml-2 group-hover:animate-bounce" />
                   ) : (
                     <ChevronDown className="h-4 w-4 ml-2 group-hover:animate-bounce" />
                   )}
                 </Button>
 
                 {expandedSection === "student" && (
-                  <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200 animate-in slide-in-from-top-4">
+                  <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
                     <h4 className="font-semibold text-green-800 mb-3 flex items-center">
                       <Brain className="h-4 w-4 mr-2 animate-pulse" />
                       AI O'quvchi bo'limi jarayoni:
@@ -860,9 +813,7 @@ export default function EducationLanding() {
                         "Aqlli testlarni bajaring (10 ta)",
                         "AI tahlili va shaxsiy tavsiyalar oling",
                       ].map((step, index) => (
-                        <li key={index} className={`animate-in slide-in-from-left-4 delay-${index * 100}`}>
-                          {step}
-                        </li>
+                        <li key={index}>{step}</li>
                       ))}
                     </ol>
                   </div>
@@ -870,11 +821,11 @@ export default function EducationLanding() {
               </CardContent>
             </Card>
 
-            {/* Enhanced Abituriyent Bo'limi - Similar enhancements */}
-            <Card className="group hover:shadow-2xl transition-all duration-500 border-2 hover:border-purple-200 relative overflow-hidden transform hover:scale-105 animate-in fade-in-50 slide-in-from-right-4">
+            {/* Abituriyent Bo'limi */}
+            <Card className="group hover:shadow-2xl transition-all duration-500 border-2 hover:border-purple-200 relative overflow-hidden transform hover:scale-105">
               <div className="absolute top-4 right-4 z-10">
                 <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white animate-pulse">
-                  <Zap className="h-3 w-3 mr-1" />
+                  <Trophy className="h-3 w-3 mr-1" />
                   AI Powered
                 </Badge>
               </div>
@@ -898,11 +849,10 @@ export default function EducationLanding() {
 
               <CardContent className="p-6 relative z-10">
                 <div className="space-y-6">
-                  {/* Asosiy Fan Yo'nalishi */}
                   <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:shadow-lg transition-all">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-lg font-semibold text-gray-900 flex items-center">
-                        <Target className="h-5 w-5 mr-2 text-blue-600 animate-pulse" />
+                        <Trophy className="h-5 w-5 mr-2 text-blue-600 animate-pulse" />
                         Asosiy Fan Yo'nalishi
                       </h4>
                       <Button
@@ -912,7 +862,7 @@ export default function EducationLanding() {
                         className="hover:scale-110 transition-transform"
                       >
                         {expandedSection === "main" ? (
-                          <ChevronUp className="h-4 w-4" />
+                          <ChevronDown className="h-4 w-4" />
                         ) : (
                           <ChevronDown className="h-4 w-4" />
                         )}
@@ -920,7 +870,7 @@ export default function EducationLanding() {
                     </div>
 
                     {expandedSection === "main" && (
-                      <div className="space-y-3 text-sm animate-in slide-in-from-top-4">
+                      <div className="space-y-3 text-sm">
                         <div className="bg-white p-3 rounded border-l-4 border-blue-500 hover:shadow-md transition-shadow">
                           <p className="font-medium text-blue-800 flex items-center">
                             <Brain className="h-4 w-4 mr-2 animate-pulse" />
@@ -933,27 +883,7 @@ export default function EducationLanding() {
                               "3-bosqich: Yaxshi daraja (76-88%) - AI mustahkamlash",
                               "4-bosqich: A'lo daraja (89-100%) - AI ilg'or dastur",
                             ].map((level, index) => (
-                              <li key={index} className={`animate-in slide-in-from-left-4 delay-${index * 100}`}>
-                                • {level}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="bg-white p-3 rounded border-l-4 border-purple-500 hover:shadow-md transition-shadow">
-                          <p className="font-medium text-purple-800 flex items-center">
-                            <Lightbulb className="h-4 w-4 mr-2 animate-pulse" />
-                            AI shaxsiy ta'lim yo'li:
-                          </p>
-                          <ul className="mt-2 space-y-1 text-purple-700">
-                            {[
-                              "AI zaif mavzularni aniqlash",
-                              "Aqlli video darsliklar va amaliyot",
-                              "90% natijaga AI yordamida erishish",
-                              "AI nazorati ostida yakuniy testlar",
-                            ].map((feature, index) => (
-                              <li key={index} className={`animate-in slide-in-from-left-4 delay-${index * 100}`}>
-                                • {feature}
-                              </li>
+                              <li key={index}>• {level}</li>
                             ))}
                           </ul>
                         </div>
@@ -966,27 +896,6 @@ export default function EducationLanding() {
                       <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
                   </div>
-
-                  {/* Majburiy Fan Yo'nalishi */}
-                  <div className="border rounded-lg p-4 bg-gradient-to-r from-orange-50 to-red-50 hover:shadow-lg transition-all">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-lg font-semibold text-gray-900 flex items-center">
-                        <BookOpen className="h-5 w-5 mr-2 text-orange-600 animate-pulse" />
-                        Majburiy Fan Yo'nalishi
-                      </h4>
-                      <Badge variant="outline" className="text-orange-600 border-orange-600 animate-bounce">
-                        AI 5-6 sinf
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-3">
-                      AI yordamida 5-6 sinf darsliklari asosida majburiy fanlar bo'yicha tayyorgarlik
-                    </p>
-                    <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 transform hover:scale-105 transition-all group">
-                      <Target className="h-4 w-4 mr-2 group-hover:animate-pulse" />
-                      AI Majburiy Fanlar Testi
-                      <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -994,16 +903,11 @@ export default function EducationLanding() {
         </div>
       </section>
 
-      {/* Enhanced AI Platformaning Afzalliklari Section */}
       <section id="advantages" className="py-20 px-4 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-gray-900 mb-6 animate-in fade-in-50 slide-in-from-top-4">
-              AI Platformaning Afzalliklari
-            </h3>
-            <p className="text-xl text-gray-600 animate-in fade-in-50 slide-in-from-top-4 delay-200">
-              Nima uchun bizning sun'iy intellekt tizimimiz eng yaxshi tanlov?
-            </p>
+            <h3 className="text-4xl font-bold text-gray-900 mb-6">AI Platformaning Afzalliklari</h3>
+            <p className="text-xl text-gray-600">Nima uchun bizning sun'iy intellekt tizimimiz eng yaxshi tanlov?</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -1014,24 +918,24 @@ export default function EducationLanding() {
                 description: "Sun'iy intellekt yordamida aniq va obyektiv baholash",
               },
               {
-                icon: Lightbulb,
+                icon: Trophy,
                 title: "Aqlli Tavsiyalar",
                 description: "AI sizning ehtiyojlaringizga moslashtirilgan tavsiyalar",
               },
               {
-                icon: TrendingUp,
+                icon: BarChart3,
                 title: "O'sish Kuzatuvi",
                 description: "AI yordamida rivojlanish jarayonini kuzatish",
               },
               {
-                icon: Zap,
+                icon: Star,
                 title: "Tezkor Javoblar",
                 description: "AI darhol tahlil va javob berish imkoniyati",
               },
             ].map((feature, index) => (
               <Card
                 key={index}
-                className={`text-center hover:shadow-xl transition-all duration-300 transform hover:scale-105 group animate-in fade-in-50 slide-in-from-bottom-4 delay-${(index + 1) * 100}`}
+                className="text-center hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
               >
                 <CardContent className="p-8">
                   <div className="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
@@ -1046,14 +950,12 @@ export default function EducationLanding() {
         </div>
       </section>
 
-      {/* Enhanced Narxlar Section */}
+      {/* Pricing Section */}
       <section id="pricing" className="py-20 px-4 bg-gray-50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-gray-900 mb-6 animate-in fade-in-50 slide-in-from-top-4">Narxlar</h3>
-            <p className="text-xl text-gray-600 animate-in fade-in-50 slide-in-from-top-4 delay-200">
-              O'zingizga mos narx rejasini tanlang
-            </p>
+            <h3 className="text-4xl font-bold text-gray-900 mb-6">Narxlar</h3>
+            <p className="text-xl text-gray-600">O'zingizga mos narx rejasini tanlang</p>
           </div>
 
           {plansLoading ? (
@@ -1070,20 +972,18 @@ export default function EducationLanding() {
                 return (
                   <Card
                     key={plan.id}
-                    className={`relative overflow-hidden group animate-in fade-in-50 slide-in-from-bottom-4 delay-${(index + 1) * 100} transition-all duration-300 ${
-                      isCurrentPlan 
-                        ? 'ring-2 ring-green-500 bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-lg cursor-default' 
-                        : 'hover:shadow-xl hover:scale-105 border-2 hover:border-blue-200 bg-white cursor-pointer'
+                    className={`relative overflow-hidden group transition-all duration-300 ${
+                      isCurrentPlan
+                        ? "ring-2 ring-green-500 bg-gradient-to-br from-green-50 to-emerald-50 border-green-300 shadow-lg cursor-default"
+                        : "hover:shadow-xl hover:scale-105 border-2 hover:border-blue-200 bg-white cursor-pointer"
                     }`}
                   >
-                    {/* Current Plan Ribbon */}
                     {isCurrentPlan && (
                       <div className="absolute top-0 right-0 w-0 h-0 border-t-[50px] border-r-[50px] border-t-green-500 border-r-transparent z-20">
                         <CheckCircle className="absolute -top-10 -right-10 h-4 w-4 text-white" />
                       </div>
                     )}
-                    
-                    {/* Popular badge for middle plan */}
+
                     {!isCurrentPlan && index === 1 && (
                       <div className="absolute top-4 right-4">
                         <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1 animate-pulse">
@@ -1092,13 +992,15 @@ export default function EducationLanding() {
                         </Badge>
                       </div>
                     )}
-                    
-                    <CardHeader className={`text-center pb-4 relative z-10 ${
-                      isCurrentPlan ? 'bg-gradient-to-r from-green-100/80 to-emerald-100/80' : ''
-                    }`}>
-                      <CardTitle className={`text-3xl font-bold mb-2 ${
-                        isCurrentPlan ? 'text-green-800' : 'text-gray-900'
-                      }`}>
+
+                    <CardHeader
+                      className={`text-center pb-4 relative z-10 ${
+                        isCurrentPlan ? "bg-gradient-to-r from-green-100/80 to-emerald-100/80" : ""
+                      }`}
+                    >
+                      <CardTitle
+                        className={`text-3xl font-bold mb-2 ${isCurrentPlan ? "text-green-800" : "text-gray-900"}`}
+                      >
                         {plan.name}
                         {isCurrentPlan && (
                           <div className="flex items-center justify-center mt-2">
@@ -1110,122 +1012,72 @@ export default function EducationLanding() {
                         )}
                       </CardTitle>
                       <div className="mb-4">
-                        <span className={`text-4xl font-bold ${
-                          isCurrentPlan ? 'text-green-600' : 'text-blue-600'
-                        }`}>
-                          {plan.price === 0 ? 'Bepul' : plan.price.toLocaleString()}
+                        <span className={`text-4xl font-bold ${isCurrentPlan ? "text-green-600" : "text-blue-600"}`}>
+                          {plan.price === 0 ? "Bepul" : plan.price.toLocaleString()}
                         </span>
-                        {plan.price > 0 && (
-                          <span className="text-lg text-gray-600 ml-1">so'm</span>
-                        )}
+                        {plan.price > 0 && <span className="text-lg text-gray-600 ml-1">so'm</span>}
                         <div className="text-sm text-gray-500">{plan.duration} kun</div>
                       </div>
-                      <CardDescription className={`text-base ${
-                        isCurrentPlan ? 'text-green-700' : 'text-gray-600'
-                      }`}>
+                      <CardDescription className={`text-base ${isCurrentPlan ? "text-green-700" : "text-gray-600"}`}>
                         {plan.description}
                       </CardDescription>
                     </CardHeader>
-                    
+
                     <CardContent className="p-6 pt-0">
                       <div className="space-y-4 mb-6">
-                        {/* Limits */}
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div className="flex items-center space-x-2">
-                            <CheckCircle className={`h-4 w-4 ${
-                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
-                            }`} />
-                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
+                            <CheckCircle className={`h-4 w-4 ${isCurrentPlan ? "text-green-600" : "text-green-500"}`} />
+                            <span className={isCurrentPlan ? "text-green-700 font-medium" : "text-gray-700"}>
                               {plan.assessments_limit} test
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <CheckCircle className={`h-4 w-4 ${
-                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
-                            }`} />
-                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
+                            <CheckCircle className={`h-4 w-4 ${isCurrentPlan ? "text-green-600" : "text-green-500"}`} />
+                            <span className={isCurrentPlan ? "text-green-700 font-medium" : "text-gray-700"}>
                               {plan.lessons_limit} dars
                             </span>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <CheckCircle className={`h-4 w-4 ${
-                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
-                            }`} />
-                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
-                              {plan.ai_hints_limit} AI maslahat
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <CheckCircle className={`h-4 w-4 ${
-                              isCurrentPlan ? 'text-green-600' : 'text-green-500'
-                            }`} />
-                            <span className={isCurrentPlan ? 'text-green-700 font-medium' : 'text-gray-700'}>
-                              {plan.subjects_limit} fan
-                            </span>
-                          </div>
                         </div>
-                        
-                        {/* Features */}
+
                         {plan.features && plan.features.length > 0 && (
                           <div className="space-y-2">
-                            <h5 className={`font-semibold mb-2 ${
-                              isCurrentPlan ? 'text-green-800' : 'text-gray-900'
-                            }`}>
+                            <h5 className={`font-semibold mb-2 ${isCurrentPlan ? "text-green-800" : "text-gray-900"}`}>
                               Qo'shimcha imkoniyatlar:
                             </h5>
                             <ul className="space-y-2">
                               {plan.features.map((feature, idx) => (
                                 <li key={idx} className="flex items-center space-x-2 text-sm">
-                                  <CheckCircle className={`h-4 w-4 flex-shrink-0 ${
-                                    isCurrentPlan ? 'text-green-600' : 'text-green-500'
-                                  }`} />
-                                  <span className={isCurrentPlan ? 'text-green-700' : 'text-gray-700'}>
-                                    {feature}
-                                  </span>
+                                  <CheckCircle
+                                    className={`h-4 w-4 flex-shrink-0 ${isCurrentPlan ? "text-green-600" : "text-green-500"}`}
+                                  />
+                                  <span className={isCurrentPlan ? "text-green-700" : "text-gray-700"}>{feature}</span>
                                 </li>
                               ))}
                             </ul>
                           </div>
                         )}
                       </div>
-                      
-                      {/* Action Button */}
+
                       {isCurrentPlan ? (
-                        <div className="space-y-3">
-                          <Button
-                            disabled
-                            className="w-full bg-green-100 text-green-800 border-2 border-green-300 cursor-not-allowed font-semibold py-3 hover:bg-green-100"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Faol reja - Ishlatilmoqda
-                          </Button>
-                          <div className="text-center bg-green-50 rounded-lg p-3 border border-green-200">
-                            <p className="text-xs text-green-700 font-medium">
-                              Bu reja hozirda faol. Boshqa rejaga o'tish yoki yangilash uchun admin bilan bog'laning.
-                            </p>
-                            <div className="mt-2">
-                              <a 
-                                href="https://t.me/talimtizimi_admin" 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-green-600 hover:text-green-800 text-xs font-medium underline"
-                              >
-                                Admin bilan bog'lanish
-                              </a>
-                            </div>
-                          </div>
-                        </div>
+                        <Button
+                          disabled
+                          className="w-full bg-green-100 text-green-800 border-2 border-green-300 cursor-not-allowed font-semibold py-3 hover:bg-green-100"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Faol reja - Ishlatilmoqda
+                        </Button>
                       ) : (
                         <Button
                           onClick={() => handlePlanSelection(plan)}
                           className={`w-full transform hover:scale-105 transition-all font-semibold py-3 shadow-md hover:shadow-lg ${
                             index === 1
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                              : "bg-blue-600 hover:bg-blue-700 text-white"
                           }`}
                         >
                           <Trophy className="h-4 w-4 mr-2" />
-                          {isLoggedIn ? 'Rejani Tanlash' : 'Kirish va Tanlash'}
+                          {isLoggedIn ? "Rejani Tanlash" : "Kirish va Tanlash"}
                         </Button>
                       )}
                     </CardContent>
@@ -1236,10 +1088,7 @@ export default function EducationLanding() {
           ) : (
             <div className="text-center py-16">
               <p className="text-lg text-gray-600 mb-4">Rejalar yuklanmadi</p>
-              <Button
-                onClick={fetchAvailablePlans}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
+              <Button onClick={fetchAvailablePlans} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Trophy className="h-4 w-4 mr-2" />
                 Qayta Yuklash
               </Button>
@@ -1248,16 +1097,11 @@ export default function EducationLanding() {
         </div>
       </section>
 
-      {/* Enhanced Bog'lanish Section */}
       <section id="contact" className="py-20 px-4 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h3 className="text-4xl font-bold text-gray-900 mb-6 animate-in fade-in-50 slide-in-from-top-4">
-              Bog'lanish
-            </h3>
-            <p className="text-xl text-gray-600 animate-in fade-in-50 slide-in-from-top-4 delay-200">
-              Savollaringiz bormi? Biz bilan bog'laning
-            </p>
+            <h3 className="text-4xl font-bold text-gray-900 mb-6">Bog'lanish</h3>
+            <p className="text-xl text-gray-600">Savollaringiz bormi? Biz bilan bog'laning</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -1269,11 +1113,11 @@ export default function EducationLanding() {
                   <span>ai@talimtizimi.uz</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Smartphone className="h-6 w-6 text-green-600" />
+                  <Trophy className="h-6 w-6 text-green-600" />
                   <span>+998 (90) 123-45-67</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Clock className="h-6 w-6 text-purple-600" />
+                  <Brain className="h-6 w-6 text-purple-600" />
                   <span>24/7 AI yordam xizmati</span>
                 </div>
               </div>
@@ -1281,18 +1125,30 @@ export default function EducationLanding() {
 
             <div>
               <h4 className="text-2xl font-bold mb-4">So'rov Yuborish</h4>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleNewsletterSubmit}>
                 <div>
                   <label htmlFor="name" className="block text-gray-700 text-sm font-bold mb-2">
                     Ismingiz
                   </label>
-                  <Input type="text" id="name" placeholder="Ismingizni kiriting" className="w-full" />
+                  <input
+                    type="text"
+                    id="name"
+                    placeholder="Ismingizni kiriting"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
+                  <label htmlFor="contact-email" className="block text-gray-700 text-sm font-bold mb-2">
                     Email
                   </label>
-                  <Input type="email" id="email" placeholder="Emailingizni kiriting" className="w-full" />
+                  <input
+                    type="email"
+                    id="contact-email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Emailingizni kiriting"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
                 <div>
                   <label htmlFor="message" className="block text-gray-700 text-sm font-bold mb-2">
@@ -1301,12 +1157,15 @@ export default function EducationLanding() {
                   <textarea
                     id="message"
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Xabaringizni kiriting"
                   ></textarea>
                 </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white transform hover:scale-105 transition-all">
-                  <Send className="h-4 w-4 mr-2" />
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white transform hover:scale-105 transition-all"
+                >
+                  <MessageCircle className="h-4 w-4 mr-2" />
                   Yuborish
                 </Button>
               </form>
@@ -1315,14 +1174,11 @@ export default function EducationLanding() {
         </div>
       </section>
 
-      {/* Enhanced Footer */}
       <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white relative overflow-hidden">
-        {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-20 h-20 border border-white/20 rounded-full"></div>
           <div className="absolute top-32 right-20 w-16 h-16 border border-white/20 rounded-full"></div>
           <div className="absolute bottom-20 left-1/4 w-12 h-12 border border-white/20 rounded-full"></div>
-          <div className="absolute bottom-32 right-1/3 w-8 h-8 border border-white/20 rounded-full"></div>
         </div>
 
         <div className="container mx-auto px-4 py-16 relative z-10">
@@ -1333,23 +1189,23 @@ export default function EducationLanding() {
               Eng so'nggi AI ta'lim yangiliklari va maxsus takliflardan xabardor bo'ling
             </p>
             <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input
+              <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email manzilingizni kiriting"
-                className="flex-1 bg-white/20 border-white/30 text-white placeholder:text-white/70 focus:bg-white/30"
+                className="flex-1 px-4 py-2 rounded-lg bg-white/20 border-white/30 text-white placeholder:text-white/70 focus:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
                 required
               />
               <Button type="submit" className="bg-white text-blue-600 hover:bg-gray-100 font-semibold">
-                <Send className="h-4 w-4 mr-2" />
+                <MessageCircle className="h-4 w-4 mr-2" />
                 Obuna bo'lish
               </Button>
             </form>
           </div>
 
           {/* Main Footer Content */}
-          <div className="grid lg:grid-cols-5 md:grid-cols-3 gap-8 mb-12">
+          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8 mb-12">
             {/* Company Info */}
             <div className="lg:col-span-2">
               <div className="flex items-center space-x-4 mb-6">
@@ -1368,22 +1224,6 @@ export default function EducationLanding() {
                 Sun'iy intellekt texnologiyalari bilan zamonaviy ta'lim olish va rivojlanish platformasi. Bizning
                 maqsadimiz - har bir o'quvchi va abituriyentga sifatli ta'lim imkoniyatini taqdim etish.
               </p>
-
-              {/* Contact Info */}
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 text-gray-300">
-                  <MapPin className="h-5 w-5 text-blue-400" />
-                  <span>Toshkent, O'zbekiston</span>
-                </div>
-                <div className="flex items-center space-x-3 text-gray-300">
-                  <Phone className="h-5 w-5 text-green-400" />
-                  <span>+998 (90) 123-45-67</span>
-                </div>
-                <div className="flex items-center space-x-3 text-gray-300">
-                  <Mail className="h-5 w-5 text-purple-400" />
-                  <span>info@talimtizimi.uz</span>
-                </div>
-              </div>
             </div>
 
             {/* AI Bo'limlar */}
@@ -1394,48 +1234,15 @@ export default function EducationLanding() {
               </h4>
               <ul className="space-y-3">
                 {[
-                  { name: "AI O'quvchi bo'limi", icon: Users },
-                  { name: "AI Abituriyent bo'limi", icon: GraduationCap },
-                  { name: "AI Daraja aniqlash", icon: Target },
-                  { name: "AI Tahlil va hisobotlar", icon: BarChart3 },
-                  { name: "AI Shaxsiy mentor", icon: Brain },
+                  "AI O'quvchi bo'limi",
+                  "AI Abituriyent bo'limi",
+                  "AI Daraja aniqlash",
+                  "AI Tahlil va hisobotlar",
+                  "AI Shaxsiy mentor",
                 ].map((item, index) => (
                   <li key={index}>
-                    <a
-                      href="#"
-                      className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors group"
-                    >
-                      <item.icon className="h-4 w-4 text-gray-400 group-hover:text-blue-400 transition-colors" />
-                      <span>{item.name}</span>
-                      <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Xizmatlar */}
-            <div>
-              <h4 className="text-lg font-bold mb-6 flex items-center">
-                <Settings className="h-5 w-5 mr-2 text-green-400" />
-                Xizmatlar
-              </h4>
-              <ul className="space-y-3">
-                {[
-                  { name: "Video darsliklar", icon: PlayCircle },
-                  { name: "Interaktiv testlar", icon: CheckCircle },
-                  { name: "Mobil ilovalar", icon: Smartphone },
-                  { name: "24/7 AI yordam", icon: MessageCircle },
-                  { name: "Sertifikatlar", icon: Award },
-                ].map((item, index) => (
-                  <li key={index}>
-                    <a
-                      href="#"
-                      className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors group"
-                    >
-                      <item.icon className="h-4 w-4 text-gray-400 group-hover:text-green-400 transition-colors" />
-                      <span>{item.name}</span>
-                      <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                      {item}
                     </a>
                   </li>
                 ))}
@@ -1445,75 +1252,18 @@ export default function EducationLanding() {
             {/* Yordam */}
             <div>
               <h4 className="text-lg font-bold mb-6 flex items-center">
-                <HelpCircle className="h-5 w-5 mr-2 text-purple-400" />
+                <MessageCircle className="h-5 w-5 mr-2 text-purple-400" />
                 Yordam
               </h4>
               <ul className="space-y-3">
-                {[
-                  { name: "AI Qo'llanma", icon: FileText },
-                  { name: "FAQ", icon: HelpCircle },
-                  { name: "Texnik yordam", icon: Settings },
-                  { name: "Bog'lanish", icon: MessageCircle },
-                  { name: "Maxfiylik siyosati", icon: Shield },
-                ].map((item, index) => (
+                {["AI Qo'llanma", "FAQ", "Texnik yordam", "Bog'lanish", "Maxfiylik siyosati"].map((item, index) => (
                   <li key={index}>
-                    <a
-                      href="#"
-                      className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors group"
-                    >
-                      <item.icon className="h-4 w-4 text-gray-400 group-hover:text-purple-400 transition-colors" />
-                      <span>{item.name}</span>
-                      <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <a href="#" className="text-gray-300 hover:text-white transition-colors">
+                      {item}
                     </a>
                   </li>
                 ))}
               </ul>
-            </div>
-          </div>
-
-          {/* Social Media & Stats */}
-          <div className="border-t border-gray-700 pt-8 mb-8">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              {/* Social Media */}
-              <div>
-                <h4 className="text-lg font-bold mb-4">Ijtimoiy tarmoqlar</h4>
-                <div className="flex space-x-4">
-                  {[
-                    { icon: Facebook, color: "hover:text-blue-500", bg: "hover:bg-blue-500/20" },
-                    { icon: Instagram, color: "hover:text-pink-500", bg: "hover:bg-pink-500/20" },
-                    { icon: Youtube, color: "hover:text-red-500", bg: "hover:bg-red-500/20" },
-                    { icon: Linkedin, color: "hover:text-blue-600", bg: "hover:bg-blue-600/20" },
-                    { icon: Twitter, color: "hover:text-blue-400", bg: "hover:bg-blue-400/20" },
-                  ].map((social, index) => (
-                    <a
-                      key={index}
-                      href="#"
-                      className={`p-3 rounded-full bg-gray-800 text-gray-400 ${social.color} ${social.bg} transition-all duration-300 transform hover:scale-110`}
-                    >
-                      <social.icon className="h-5 w-5" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              {/* Live Stats */}
-              <div className="text-right">
-                <h4 className="text-lg font-bold mb-4">Jonli statistika</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-400">{studentCount.toLocaleString()}+</div>
-                    <div className="text-xs text-gray-400">O'quvchilar</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">{accuracyCount}%</div>
-                    <div className="text-xs text-gray-400">AI Aniqlik</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-400">24/7</div>
-                    <div className="text-xs text-gray-400">Yordam</div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -1522,19 +1272,6 @@ export default function EducationLanding() {
             <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
               <div className="flex items-center space-x-6 text-sm text-gray-400">
                 <span>&copy; 2024 Ta'lim Tizimi. Barcha huquqlar himoyalangan.</span>
-                <div className="hidden md:flex items-center space-x-4">
-                  <a href="#" className="hover:text-white transition-colors">
-                    Maxfiylik
-                  </a>
-                  <span>•</span>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Shartlar
-                  </a>
-                  <span>•</span>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Cookie
-                  </a>
-                </div>
               </div>
 
               <div className="flex items-center space-x-4">
@@ -1542,9 +1279,6 @@ export default function EducationLanding() {
                   <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
                   Tizim faol
                 </Badge>
-                <div className="text-sm text-gray-400">
-                  Oxirgi yangilanish: {new Date().toLocaleDateString("uz-UZ")}
-                </div>
               </div>
             </div>
           </div>
@@ -1555,31 +1289,28 @@ export default function EducationLanding() {
           onClick={() => scrollToSection("home")}
           className="fixed bottom-24 right-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 z-40"
         >
-          <ChevronUp className="h-5 w-5" />
+          <ArrowRight className="h-5 w-5 rotate-[-90deg]" />
         </button>
       </footer>
 
       {/* Plan Selection Modal */}
       {showPlanModal && selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in-0">
-          <div data-plan-modal className="bg-white rounded-2xl p-8 m-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div
+            data-plan-modal
+            className="bg-white rounded-2xl p-8 m-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+          >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 flex items-center">
                 <Trophy className="h-6 w-6 mr-2 text-blue-600" />
                 Reja Tasdiqlash
               </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPlanModal(false)}
-                className="hover:bg-gray-100"
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowPlanModal(false)} className="hover:bg-gray-100">
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
             <div className="space-y-6">
-              {/* Selected Plan Details */}
               <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-xl font-semibold text-gray-900">{selectedPlan.name}</h4>
@@ -1588,66 +1319,27 @@ export default function EducationLanding() {
                     Tanlangan
                   </Badge>
                 </div>
-                
+
                 <div className="mb-4">
-                  <span className="text-3xl font-bold text-blue-600">
-                    {selectedPlan.price.toLocaleString()}
-                  </span>
+                  <span className="text-3xl font-bold text-blue-600">{selectedPlan.price.toLocaleString()}</span>
                   <span className="text-lg text-gray-600 ml-1">so'm</span>
                   <span className="text-sm text-gray-500 ml-2">({selectedPlan.duration} kun)</span>
                 </div>
-                
+
                 <p className="text-gray-700 mb-4">{selectedPlan.description}</p>
-                
-                {/* Plan Limits */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{selectedPlan.assessments_limit} test</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{selectedPlan.lessons_limit} dars</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{selectedPlan.ai_hints_limit} AI maslahat</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <span className="font-medium">{selectedPlan.subjects_limit} fan</span>
-                  </div>
-                </div>
-                
-                {/* Plan Features */}
-                {selectedPlan.features && selectedPlan.features.length > 0 && (
-                  <div>
-                    <h5 className="font-semibold text-gray-900 mb-2">Qo'shimcha imkoniyatlar:</h5>
-                    <ul className="space-y-1">
-                      {selectedPlan.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center space-x-2 text-sm">
-                          <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
 
-              {/* Confirmation Message */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-center mb-2">
                   <MessageCircle className="h-5 w-5 text-yellow-600 mr-2" />
                   <h5 className="font-semibold text-yellow-800">Keyingi qadam</h5>
                 </div>
                 <p className="text-yellow-700 text-sm">
-                  Tasdiqlashdan so'ng siz Telegram orqali admin bilan bog'lanasiz. 
-                  Admin sizga to'lov jarayoni va reja aktivlashtirish haqida batafsil ma'lumot beradi.
+                  Tasdiqlashdan so'ng siz Telegram orqali admin bilan bog'lanasiz. Admin sizga to'lov jarayoni va reja
+                  aktivlashtirish haqida batafsil ma'lumot beradi.
                 </p>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex space-x-4">
                 <Button
                   variant="outline"

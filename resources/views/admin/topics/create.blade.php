@@ -1,8 +1,9 @@
 @extends('layouts.admin')
 
+@section('page-title','Yangi mavzu qo\'shish')
+
 @section('content')
 <div class="container">
-    <h1>Yangi mavzu qo'shish</h1>
 
     @if($errors->any())
         <div class="alert alert-danger">

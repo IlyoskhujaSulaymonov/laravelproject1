@@ -124,6 +124,24 @@
                                     <span class="nav-text">Vazifalar va Topshiriqlar</span>
                                 </a>
                             </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.sample-questions.subject.list') }}"
+                                    class="nav-link {{ request()->routeIs('admin.sample-questions*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.sample-questions*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-lightbulb nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Na'munaviy savollar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.user-tests.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.user-tests*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.user-tests*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-chart-bar nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Foydalanuvchi testlari</span>
+                                </a>
+                            </li>
                             {{-- <li class="nav-item" role="none">
                                 <a href="{{ route('admin.grades') }}"
                                     class="nav-link {{ request()->routeIs('admin.grades*') ? 'active' : '' }}"
@@ -191,6 +209,15 @@
                                     aria-current="{{ request()->routeIs('admin.payments.*') ? 'page' : 'false' }}">
                                     <i class="fas fa-dollar nav-icon" aria-hidden="true"></i>
                                     <span class="nav-text">To'lovlar</span>
+                                </a>
+                            </li>
+                            <li class="nav-item" role="none">
+                                <a href="{{ route('admin.plan-purchase-requests.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.plan-purchase-requests.*') ? 'active' : '' }}"
+                                    role="menuitem"
+                                    aria-current="{{ request()->routeIs('admin.plan-purchase-requests.*') ? 'page' : 'false' }}">
+                                    <i class="fas fa-shopping-cart nav-icon" aria-hidden="true"></i>
+                                    <span class="nav-text">Tarif So'rovlari</span>
                                 </a>
                             </li>
                         </ul>

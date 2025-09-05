@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\LearningController;
 use App\Http\Controllers\Api\UserPlanController;
 use App\Http\Controllers\Api\UserTestController;
+use App\Http\Controllers\Api\TelegramController; // Added TelegramController
 use App\Models\Region;
 use Illuminate\Support\Facades\Route;
 
@@ -64,6 +65,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/usage', [UserPlanController::class, 'getPlanUsage']);
     });
 
+    // Telegram Integration API routes
+    Route::prefix('api/telegram')->group(function () {
+        Route::post('/request-plan-purchase', [TelegramController::class, 'requestPlanPurchase']);
+        Route::post('/connect-account', [TelegramController::class, 'connectTelegramAccount']);
+    });
+
 });
 
 // Public Plans API route (accessible to all users)
@@ -81,3 +88,6 @@ Route::get('/api/regions', function () {
         'regions' => Region::all(),
     ]);
 });
+
+// Telegram Webhook route (no auth required)
+Route::post('/api/telegram/webhook', [TelegramController::class, 'handleWebhook']);

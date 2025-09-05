@@ -445,9 +445,16 @@ export function MathQuestionEditor({ questionId, mode = "create" }: MathQuestion
 
       const topicId = typeof window !== "undefined" ? (window as any).topic?.id : null
       const questionId = typeof window !== "undefined" ? (window as any).questionId : null
+      const isSampleQuestion = typeof window !== "undefined" ? (window as any).sampleQuestionMode : false
 
-      const url =
-        mode === "edit" ? `/admin/questions/${topicId}/${questionId}` : `/admin/questions/${topicId}`
+      let url
+      if (isSampleQuestion) {
+        // For sample questions, use subject-based routes
+        url = mode === "edit" ? `/admin/sample-questions/${topicId}/${questionId}` : `/admin/sample-questions/${topicId}`
+      } else {
+        // For regular questions, use topic-based routes  
+        url = mode === "edit" ? `/admin/questions/${topicId}/${questionId}` : `/admin/questions/${topicId}`
+      }
 
       if (mode === "edit") {
         formData.append("_method", "PUT")
@@ -483,8 +490,15 @@ export function MathQuestionEditor({ questionId, mode = "create" }: MathQuestion
 
         setTimeout(() => {
           const topicId = typeof window !== "undefined" ? (window as any).topic?.id : null
+          const isSampleQuestion = typeof window !== "undefined" ? (window as any).sampleQuestionMode : false
           
-          window.location.href = `/admin/questions/${topicId}`
+          if (isSampleQuestion) {
+            // Redirect to sample questions index
+            window.location.href = `/admin/sample-questions/${topicId}`
+          } else {
+            // Redirect to regular questions index
+            window.location.href = `/admin/questions/${topicId}`
+          }
         }, 1500)
       } else {
         setSaveMessage(result.message)

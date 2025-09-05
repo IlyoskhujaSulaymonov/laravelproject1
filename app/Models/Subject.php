@@ -13,4 +13,14 @@ class Subject extends Model
     {
         return $this->hasMany(Topic::class);
     }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    public function sampleQuestions(): HasMany
+    {
+        return $this->hasMany(Question::class)->where('type', 'sample');
+    }
 }

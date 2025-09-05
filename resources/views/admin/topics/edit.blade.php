@@ -1,8 +1,9 @@
 @extends('layouts.admin')
 
+@section('page-title','Mavzuni tahrirlash')
+
 @section('content')
 <div class="container">
-    <h1>Mavzuni tahrirlash</h1>
 
     @if($errors->any())
         <div class="alert alert-danger">

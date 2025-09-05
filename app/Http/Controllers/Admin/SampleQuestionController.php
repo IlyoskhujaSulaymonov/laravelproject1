@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Question;
 use App\Models\Subject;
-use App\Models\Topic;
 use App\Models\Variant;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -13,37 +12,37 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
-class QuestionController extends Controller
+class SampleQuestionController extends Controller
 {
-    public function topicList(Request $request)
+    public function subjectList(Request $request)
     {
-        $subjects = Subject::all();
-        $query = Topic::with('subject')->orderBy('order');
+        $query = Subject::orderBy('name');
 
-        if ($request->filled('subject_id')) {
-            $query->where('subject_id', $request->subject_id);
-        }
         if ($request->filled('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $topics = $query->paginate(20);
+        $subjects = $query->paginate(20);
 
-        return view('admin.questions.topic', compact('topics', 'subjects'));
+        return view('admin.sample-questions.subject', compact('subjects'));
     }
     
-     public function index(Topic $topic)
+    public function index(Subject $subject)
     {
-        $questions = Question::with('topic')->where('topic_id',$topic->id)->paginate(10);
-        return view('admin.questions.index', compact('questions', 'topic'));
+        $questions = Question::sample()
+            ->with('subject')
+            ->where('subject_id', $subject->id)
+            ->paginate(10);
+            
+        return view('admin.sample-questions.index', compact('questions', 'subject'));
     }
 
-    public function create(Topic $topic)
+    public function create(Subject $subject)
     {
-        return view('admin.questions.create', compact('topic'));
+        return view('admin.sample-questions.create', compact('subject'));
     }
 
-    public function store(Topic $topic, Request $request)
+    public function store(Subject $subject, Request $request)
     {
         try {
             $request->validate([
@@ -79,7 +78,7 @@ class QuestionController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $image) {
                     $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
-                    $path = $image->storeAs('questions/images', $filename, 'public');
+                    $path = $image->storeAs('sample-questions/images', $filename, 'public');
                     $uploadedImages[] = [
                         'filename' => $filename,
                         'path' => $path,
@@ -91,7 +90,9 @@ class QuestionController extends Controller
             DB::beginTransaction();
 
             $question = Question::create([
-                'topic_id' => $topic->id,
+                'subject_id' => $subject->id,
+                'topic_id' => null, // Explicitly set to null for sample questions
+                'type' => 'sample',
                 'question' => $request->question,
                 'formulas' => json_encode($formulas),
                 'images' => json_encode($uploadedImages),
@@ -113,24 +114,38 @@ class QuestionController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Savol muvaffaqiyatli saqlandi!',
-                'redirect' => route('admin.questions.index',$topic)
-            ]);
+            // Check if this is a request from the React component (AJAX request)
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Na\'munaviy savol muvaffaqiyatli saqlandi!',
+                    'redirect' => route('admin.sample-questions.index', $subject)
+                ]);
+            }
+
+            return redirect()->route('admin.sample-questions.index', $subject)->with('success', 'Na\'munaviy savol muvaffaqiyatli saqlandi!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Xatolik yuz berdi: ' . $e->getMessage()
-            ], 500);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Xatolik yuz berdi: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Xatolik yuz berdi: ' . $e->getMessage());
         }
     }
 
-
-    public function edit(Topic $topic, Question $question)
+    public function edit(Subject $subject, Question $question)
     {
+        // Ensure this is a sample question for this subject
+        if (!$question->isSample() || $question->subject_id !== $subject->id) {
+            abort(404);
+        }
+
         $question->load('variants');
         
         // Force refresh from database to ensure we get raw data
@@ -166,12 +181,17 @@ class QuestionController extends Controller
             }
         }
         
-        return view('admin.questions.edit', compact('question', 'topic'));
+        return view('admin.sample-questions.edit', compact('question', 'subject'));
     }
 
-    public function update(Topic $topic, Question $question, Request $request)
+    public function update(Subject $subject, Question $question, Request $request)
     {
         try {
+            // Ensure this is a sample question for this subject
+            if (!$question->isSample() || $question->subject_id !== $subject->id) {
+                abort(404);
+            }
+
             $request->validate([
                 'question' => 'required|string',
                 'formulas' => 'nullable|string',
@@ -226,7 +246,7 @@ class QuestionController extends Controller
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $index => $image) {
                     $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
-                    $path = $image->storeAs('questions/images', $filename, 'public');
+                    $path = $image->storeAs('sample-questions/images', $filename, 'public');
                     $finalImages[] = [
                         'filename' => $filename,
                         'path' => $path,
@@ -241,6 +261,10 @@ class QuestionController extends Controller
                 'question' => $request->question,
                 'formulas' => json_encode($formulas),
                 'images' => json_encode($finalImages),
+                // Ensure sample question properties are maintained
+                'subject_id' => $subject->id,
+                'topic_id' => null,
+                'type' => 'sample',
             ]);
 
             $question->variants()->delete();
@@ -261,23 +285,38 @@ class QuestionController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Savol muvaffaqiyatli yangilandi!',
-                'redirect' => route('admin.questions.index', $topic)
-            ]);
+            // Check if this is a request from the React component (AJAX request)
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Na\'munaviy savol muvaffaqiyatli yangilandi!',
+                    'redirect' => route('admin.sample-questions.index', $subject)
+                ]);
+            }
+
+            return redirect()->route('admin.sample-questions.index', $subject)->with('success', 'Na\'munaviy savol muvaffaqiyatli yangilandi!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Xatolik yuz berdi: ' . $e->getMessage()
-            ], 500);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Xatolik yuz berdi: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->back()->with('error', 'Xatolik yuz berdi: ' . $e->getMessage());
         }
     }
 
-    public function show(Topic $topic, Question $question)
+    public function show(Subject $subject, Question $question)
     {
+        // Ensure this is a sample question for this subject
+        if (!$question->isSample() || $question->subject_id !== $subject->id) {
+            abort(404);
+        }
+
         $question->load('variants');
         
         // Force refresh from database to ensure we get raw data
@@ -313,13 +352,17 @@ class QuestionController extends Controller
             }
         }
         
-        return view('admin.questions.show', compact('topic','question'));
+        return view('admin.sample-questions.show', compact('subject', 'question'));
     }   
 
-    public function destroy(Topic $topic, Question $question)
+    public function destroy(Subject $subject, Question $question)
     {
+        // Ensure this is a sample question for this subject
+        if (!$question->isSample() || $question->subject_id !== $subject->id) {
+            abort(404);
+        }
+
         $question->delete();
-        return redirect()->route('admin.questions.index',$topic)->with('success', 'Savol o‘chirildi!');
+        return redirect()->route('admin.sample-questions.index', $subject)->with('success', 'Na\'munaviy savol o\'chirildi!');
     }
-    
 }

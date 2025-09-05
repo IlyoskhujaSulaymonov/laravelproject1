@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('page-title', $topic->title . ' - Mavzusidan savollar ro\'yxati')
+@section('page-title', $subject->name . ' - Na\'munaviy savollar ro\'yxati')
 
 {{-- Enhanced Custom Styles --}}
 <style>
@@ -104,61 +104,40 @@
     ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
     }
-
-    /* Pagination styling improvements */
-    .pagination { gap: 0.375rem; align-items: center; }
-    .pagination .page-item { display: inline-flex; }
-    .pagination .page-link {
-        border: 1px solid #e2e8f0;
-        color: #334155;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.5rem;
-        background: #ffffff;
-        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-        transition: all 0.2s ease;
-    }
-    .pagination .page-link:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
-    .pagination .page-item.active .page-link {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
-        color: #ffffff;
-        border-color: #1d4ed8;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-    }
-    .pagination .page-item.disabled .page-link { opacity: 0.5; background: #f8fafc; }
 </style>
 
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-4 py-8">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 px-4 py-4">
     <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
-        <div class="bg-gradient-to-br from-white to-slate-50 rounded-2xl shadow-lg border border-slate-200/60 p-4 mb-6 backdrop-blur-sm">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div class="space-y-1.5">
-                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ $topic->title }}</h1>
-                    <div class="flex items-center gap-3 text-slate-600">
-                        <span class="inline-flex items-center gap-2 px-2.5 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+        <div class="bg-gradient-to-br from-white to-slate-50 rounded-2xl shadow-lg border border-slate-200/60 p-4 mb-4 backdrop-blur-sm">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div class="space-y-2">
+                    <h1 class="text-3xl font-bold text-slate-900 tracking-tight">{{ $subject->name }} - Na'munaviy savollar</h1>
+                    <div class="flex items-center gap-4 text-slate-600">
+                        <span class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a4 4 0 118 0v1a2 2 0 11-4 0z"/>
                             </svg>
-                            {{ $questions->total() }} ta savol
+                            {{ $questions->total() }} ta na'munaviy savol
                         </span>
                     </div>
                 </div>
-                <div class="flex gap-2">
-                    <a href="{{ route('admin.questions.topic.list') }}" 
-                       class="inline-flex items-center px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex gap-3">
+                    <a href="{{ route('admin.sample-questions.subject.list') }}" 
+                       class="inline-flex items-center px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all duration-200 font-medium shadow-sm hover:shadow-md">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                         </svg>
                         Ortga
                     </a>
-                    <a href="{{ route('admin.questions.create', $topic) }}" 
-                       class="inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg">
-                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('admin.sample-questions.create', $subject) }}" 
+                       class="inline-flex items-center px-3 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        Yangi savol qo'shish
+                        Yangi na'munaviy savol qo'shish
                     </a>
                 </div>
             </div>
@@ -174,19 +153,19 @@
                     <input type="text" 
                            name="search" 
                            value="{{ request('search') }}"
-                           placeholder="Savollarni qidirish..." 
-                           class="w-full pl-12 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/90 backdrop-blur-sm transition-all duration-200">
+                           placeholder="Na'munaviy savollarni qidirish..." 
+                           class="w-full pl-12 pr-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white/90 backdrop-blur-sm transition-all duration-200">
                 </div>
                 <div class="flex gap-2">
                     <button type="submit" 
-                            class="px-4 py-2 text-sm bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg">
+                            class="px-4 py-2 text-sm bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-lg transition-all duration-200 font-medium shadow-md hover:shadow-lg">
                         <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                         </svg>
                         Qidirish
                     </button>
                     @if(request('search'))
-                        <a href="{{ route('admin.questions.index', $topic) }}" 
+                        <a href="{{ route('admin.sample-questions.index', $subject) }}" 
                            class="px-4 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md">
                             <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -199,35 +178,38 @@
         </div>
 
         <!-- Questions Grid -->
-        <div class="space-y-4">
+        <div class="space-y-6">
             @php
                 $offset = (request()->get('page', 1) - 1) * $questions->perPage();
             @endphp
             
             @forelse($questions as $question)
-                <div class="group bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1">
-                    <div class="p-4">
+                <div class="group bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 hover:shadow-xl hover:border-amber-200 transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="p-8">
                         <div class="flex items-start justify-between">
                             <div class="flex-1">
-                                <!-- Question Number and Topic -->
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="inline-flex items-center justify-center w-9 h-9 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-full text-xs font-bold shadow-lg">
+                                <!-- Question Number and Subject -->
+                                <div class="flex items-center gap-4 mb-4">
+                                    <span class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-full text-sm font-bold shadow-lg">
                                         {{ $offset + $loop->iteration }}
                                     </span>
-                                    <span class="inline-flex items-center px-3 py-1 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-full text-xs font-medium shadow-sm">
-                                        {{ $question->topic->title ?? 'Noma\'lum' }}
+                                    <span class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-100 to-indigo-200 text-indigo-700 rounded-full text-sm font-medium shadow-sm">
+                                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a4 4 0 118 0v1a2 2 0 11-4 0z"/>
+                                        </svg>
+                                        Na'munaviy savol
                                     </span>
                                 </div>
                                 
                                 <!-- Question Content -->
-                                <div class="math-preview text-slate-800 mb-4 inline-content enhanced-shadow leading-relaxed" data-full-content="{!! htmlspecialchars($question->question) !!}">
+                                <div class="math-preview text-slate-800 mb-6 inline-content enhanced-shadow leading-relaxed" data-full-content="{!! htmlspecialchars($question->question) !!}">
                                     {!! $question->question !!}
                                 </div>
                                 
                                 <!-- Question Stats -->
-                                <div class="flex items-center gap-6 text-sm text-slate-500">
+                                <div class="flex items-center gap-8 text-sm text-slate-500">
                                     <span class="flex items-center gap-2 font-medium">
-                                        <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
                                         </svg>
                                         {{ $question->variants->count() }} ta variant
@@ -239,7 +221,7 @@
                                         {{ $question->variants->where('is_correct', true)->count() }} ta to'g'ri javob
                                     </span>
                                     <span class="flex items-center gap-2 font-medium">
-                                        <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
                                         </svg>
                                         {{ $question->created_at->format('d.m.Y') }}
@@ -248,32 +230,32 @@
                             </div>
                             
                             <!-- Actions -->
-                            <div class="flex items-center gap-2 ml-4">
-                                <a href="{{ route('admin.questions.show', [$topic, $question]) }}" 
-                                   class="inline-flex items-center justify-center w-9 h-9 bg-green-50 hover:bg-green-100 text-green-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                            <div class="flex items-center gap-2 ml-6">
+                                <a href="{{ route('admin.sample-questions.show', [$subject, $question]) }}" 
+                                   class="inline-flex items-center justify-center w-9 h-9 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                                    title="Ko'rish">
-                                    <svg class="w-4 h-4 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </a>
-                                <a href="{{ route('admin.questions.edit', [$topic, $question]) }}" 
-                                   class="inline-flex items-center justify-center w-9 h-9 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+                                <a href="{{ route('admin.sample-questions.edit', [$subject, $question]) }}" 
+                                   class="inline-flex items-center justify-center w-9 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                                    title="Tahrirlash">
-                                    <svg class="w-4 h-4 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                     </svg>
                                 </a>
-                                <form action="{{ route('admin.questions.destroy', [$topic, $question]) }}" 
+                                <form action="{{ route('admin.sample-questions.destroy', [$subject, $question]) }}" 
                                       method="POST" 
-                                      class="inline-flex items-center m-0 p-0"
-                                      onsubmit="return confirm('Bu savolni o\'chirishni istaysizmi?')">
+                                      class="contents"
+                                      onsubmit="return confirm('Bu na\'munaviy savolni o\'chirishni istaysizmi?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" 
-                                            class="inline-flex items-center justify-center w-9 h-9 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md leading-none"
+                                            class="inline-flex items-center justify-center w-9 h-9 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
                                             title="O'chirish">
-                                        <svg class="w-4 h-4 block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"/>
                                         </svg>
                                     </button>
@@ -285,25 +267,25 @@
             @empty
                 <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-16 text-center">
                     <div class="max-w-md mx-auto">
-                        <div class="w-20 h-20 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        <div class="w-20 h-20 bg-gradient-to-r from-indigo-100 to-indigo-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg class="w-10 h-10 text-indigo-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a4 4 0 118 0v1a2 2 0 11-4 0z"/>
                             </svg>
                         </div>
-                        <h3 class="text-xl font-bold text-slate-900 mb-3">Savollar topilmadi</h3>
+                        <h3 class="text-xl font-bold text-slate-900 mb-3">Na'munaviy savollar topilmadi</h3>
                         <p class="text-slate-600 mb-8 leading-relaxed">
                             @if(request('search'))
                                 "{{ request('search') }}" bo'yicha qidiruv natijasi topilmadi.
                             @else
-                                Hozircha bu mavzuda savollar mavjud emas.
+                                Hozircha bu fanda na'munaviy savollar mavjud emas.
                             @endif
                         </p>
-                        <a href="{{ route('admin.questions.create', $topic) }}" 
-                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        <a href="{{ route('admin.sample-questions.create', $subject) }}" 
+                           class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
-                            Birinchi savolni qo'shish
+                            Birinchi na'munaviy savolni qo'shish
                         </a>
                     </div>
                 </div>
@@ -312,16 +294,9 @@
 
         <!-- Pagination -->
         @if($questions->hasPages())
-            <div class="mt-12">
-                <div class="bg-gradient-to-br from-white/90 to-slate-50/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-4">
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
-                        <div class="text-slate-600 text-sm font-medium">
-                            <span>Sahifa: {{ $questions->currentPage() }} / {{ $questions->lastPage() }}</span>
-                        </div>
-                        <div>
-                            {{ $questions->appends(request()->query())->links('pagination::bootstrap-4') }}
-                        </div>
-                    </div>
+            <div class="mt-12 flex justify-center">
+                <div class="bg-gradient-to-br from-white/90 to-slate-50/90 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 p-6">
+                    {{ $questions->appends(request()->query())->links() }}
                 </div>
             </div>
         @endif
