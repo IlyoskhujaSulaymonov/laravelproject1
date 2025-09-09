@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\PlanController;
 use App\Http\Controllers\Admin\UserPlanController;
 use App\Http\Controllers\Admin\UserTestController as AdminUserTestController;
+use App\Http\Controllers\Admin\PlanPurchaseRequestController;
 
 Route::get('/admin', function () {
     return redirect('admin/dashboard');

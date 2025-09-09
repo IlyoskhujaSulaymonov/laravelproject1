@@ -187,4 +187,25 @@ class User extends Authenticatable implements MustVerifyEmail
         
         return $currentPlan->getRemainingAssessments();
     }
+    
+    /**
+     * Check if user has connected their Telegram account
+     */
+    public function hasTelegramAccount(): bool
+    {
+        return !empty($this->telegram_chat_id);
+    }
+    
+    /**
+     * Get Telegram chat URL for this user
+     */
+    public function getTelegramChatUrl(): ?string
+    {
+        if (!$this->telegram_chat_id) {
+            return null;
+        }
+        
+        $botUsername = config('services.telegram.bot_username', 'math_ai_integrator_bot');
+        return "https://t.me/{$botUsername}";
+    }
 }

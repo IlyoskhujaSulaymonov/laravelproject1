@@ -4,8 +4,10 @@ use App\Http\Controllers\Api\AiController;
 use App\Http\Controllers\Api\LearningController;
 use App\Http\Controllers\Api\UserPlanController;
 use App\Http\Controllers\Api\UserTestController;
-use App\Http\Controllers\Api\TelegramController; // Added TelegramController
+use App\Http\Controllers\Api\TelegramController;
+use App\Http\Controllers\TelegraphController; // Added TelegraphController
 use App\Models\Region;
+use DefStudio\Telegraph\Models\TelegraphBot;
 use Illuminate\Support\Facades\Route;
 
 // Profile routes moved to web.php for proper CSRF handling
@@ -69,6 +71,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('api/telegram')->group(function () {
         Route::post('/request-plan-purchase', [TelegramController::class, 'requestPlanPurchase']);
         Route::post('/connect-account', [TelegramController::class, 'connectTelegramAccount']);
+        Route::get('/connect-via-bot', [TelegramController::class, 'handleTelegramDeepLink']);
     });
 
 });
@@ -91,3 +94,6 @@ Route::get('/api/regions', function () {
 
 // Telegram Webhook route (no auth required)
 Route::post('/api/telegram/webhook', [TelegramController::class, 'handleWebhook']);
+
+// Telegraph Webhook routes (no auth required)
+Route::post('/telegraph/{token}/webhook', [TelegraphController::class, 'handleWebhook']);

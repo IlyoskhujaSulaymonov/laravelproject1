@@ -1,81 +1,78 @@
 @extends('layouts.admin')
 
-@section('page-title', 'Plan Purchase Requests')
+@section('page-title', 'Tarif rejasini sotib olish so\'rovlari')
 
 @section('content')
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h1 class="h3 mb-0">Plan Purchase Requests</h1>
-        <p class="text-muted">Manage user requests for plan purchases</p>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </a>
-    </div>
-</div>
+
 
 <!-- Filters -->
-<div class="card mb-4">
-    <div class="card-header">
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-white">
         <h5 class="mb-0">
-            <i class="fas fa-filter me-2"></i>Filters
-            <button class="btn btn-sm btn-outline-secondary float-end" type="button" data-bs-toggle="collapse" 
-                    data-bs-target="#filtersCollapse" aria-expanded="true">
-                <i class="fas fa-chevron-down"></i>
+            <i class="fas fa-filter me-2 text-primary"></i>Filtrlar
+            <button class="btn btn-sm btn-outline-primary float-end" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse" id="filterToggle">
+                <i class="fas fa-chevron-down" id="filterIcon"></i>
             </button>
         </h5>
     </div>
-    <div class="collapse show" id="filtersCollapse">
+    <div class="collapse" id="filtersCollapse">
         <div class="card-body">
-            <form method="GET" action="{{ route('admin.plan-purchase-requests.index') }}">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label for="search" class="form-label">Search</label>
+            <form method="GET" action="{{ route('admin.plan-purchase-requests.index') }}" class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <label for="search" class="form-label fw-bold">Qidirish</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
                         <input type="text" class="form-control" id="search" name="search" 
-                               value="{{ request('search') }}" placeholder="User name or email...">
-                    </div>
-                    <div class="col-md-3">
-                        <label for="user_id" class="form-label">User</label>
-                        <select class="form-select" id="user_id" name="user_id">
-                            <option value="">All Users</option>
-                            @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="plan_id" class="form-label">Plan</label>
-                        <select class="form-select" id="plan_id" name="plan_id">
-                            <option value="">All Plans</option>
-                            @foreach($plans as $plan)
-                                <option value="{{ $plan->id }}" {{ request('plan_id') == $plan->id ? 'selected' : '' }}>
-                                    {{ $plan->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">All Statuses</option>
-                            @foreach($statuses as $key => $value)
-                                <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
-                                    {{ $value }}
-                                </option>
-                            @endforeach
-                        </select>
+                               value="{{ request('search') }}" placeholder="Foydalanuvchi nomi yoki email...">
                     </div>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-12">
+                <div class="col-md-6 col-lg-3">
+                    <label for="user_id" class="form-label fw-bold">Foydalanuvchi</label>
+                    <select class="form-select" id="user_id" name="user_id">
+                        <option value="">Barcha foydalanuvchilar</option>
+                        @foreach($users as $user)
+                            <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>
+                                {{ $user->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label for="plan_id" class="form-label fw-bold">Tarif reja</label>
+                    <select class="form-select" id="plan_id" name="plan_id">
+                        <option value="">Barcha tarif rejalar</option>
+                        @foreach($plans as $plan)
+                            <option value="{{ $plan->id }}" {{ request('plan_id') == $plan->id ? 'selected' : '' }}>
+                                {{ $plan->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <label for="status" class="form-label fw-bold">Holat</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">Barcha holatlar</option>
+                        @foreach($statuses as $key => $value)
+                            <option value="{{ $key }}" {{ request('status') == $key ? 'selected' : '' }}>
+                                @if($key === 'pending')
+                                    Kutilmoqda
+                                @elseif($key === 'approved')
+                                    Tasdiqlangan
+                                @else
+                                    Rad etilgan
+                                @endif
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-12 mt-2">
+                    <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Filter
+                            <i class="fas fa-search me-1"></i> Filtr
                         </button>
                         <a href="{{ route('admin.plan-purchase-requests.index') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times"></i> Clear
+                            <i class="fas fa-times me-1"></i> Tozalash
                         </a>
                     </div>
                 </div>
@@ -85,9 +82,9 @@
 </div>
 
 <!-- Requests Table -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0">Purchase Requests</h5>
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Sotib olish so'rovlari</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -95,12 +92,12 @@
                 <thead class="table-dark">
                     <tr>
                         <th>ID</th>
-                        <th>User</th>
-                        <th>Plan</th>
-                        <th>Message</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Actions</th>
+                        <th>Foydalanuvchi</th>
+                        <th>Tarif reja</th>
+                        <th>Aloqa ma'lumotlari</th>
+                        <th>Holat</th>
+                        <th>Sana</th>
+                        <th>Harakatlar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -120,20 +117,26 @@
                             </td>
                             <td>
                                 <div class="fw-medium">{{ $request->plan->name }}</div>
-                                <small class="text-muted">{{ $request->plan->price }} UZS</small>
+                                <small class="text-muted">{{ number_format($request->plan->price, 0, '', ' ') }} UZS</small>
                             </td>
                             <td>
-                                <div class="text-truncate" style="max-width: 200px;" title="{{ $request->message }}">
-                                    {{ Str::limit($request->message, 50) }}
-                                </div>
+                                @if($request->phone)
+                                    <div><i class="fas fa-phone me-1"></i> {{ $request->phone }}</div>
+                                @endif
+                                @if($request->telegram_username)
+                                    <div><i class="fab fa-telegram me-1"></i> @<a href="https://t.me/{{ $request->telegram_username }}" target="_blank">{{ $request->telegram_username }}</a></div>
+                                @endif
+                                @if(!$request->phone && !$request->telegram_username)
+                                    <div class="text-muted">Aloqa ma'lumotlari yo'q</div>
+                                @endif
                             </td>
                             <td>
                                 @if($request->status === 'pending')
-                                    <span class="badge bg-warning">Pending</span>
+                                    <span class="badge bg-warning">Kutilmoqda</span>
                                 @elseif($request->status === 'approved')
-                                    <span class="badge bg-success">Approved</span>
+                                    <span class="badge bg-success">Tasdiqlangan</span>
                                 @else
-                                    <span class="badge bg-danger">Rejected</span>
+                                    <span class="badge bg-danger">Rad etilgan</span>
                                 @endif
                             </td>
                             <td>
@@ -143,11 +146,11 @@
                             <td>
                                 <div class="btn-group" role="group">
                                     <a href="{{ route('admin.plan-purchase-requests.show', $request) }}" 
-                                       class="btn btn-sm btn-outline-primary" title="View">
+                                       class="btn btn-sm btn-outline-primary" title="Ko'rish">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-danger" 
-                                            onclick="deleteRequest({{ $request->id }})" title="Delete">
+                                            onclick="deleteRequest({{ $request->id }})" title="O'chirish">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -155,9 +158,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4">
+                            <td colspan="7" class="text-center py-5">
                                 <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                                <p class="text-muted">No purchase requests found</p>
+                                <p class="text-muted">Sotib olish so'rovlari topilmadi</p>
                             </td>
                         </tr>
                     @endforelse
@@ -177,18 +180,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Delete Request</h5>
+                <h5 class="modal-title">So'rovni o'chirish</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this purchase request? This action cannot be undone.</p>
+                <p>Ushbu sotib olish so'rovini o'chirishni xohlaysizmi? Bu amalni bekor qilib bo'lmaydi.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
                 <form id="deleteForm" method="POST" class="d-inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
+                    <button type="submit" class="btn btn-danger">O'chirish</button>
                 </form>
             </div>
         </div>
@@ -209,6 +212,22 @@
 
 @push('scripts')
 <script>
+// Handle filter toggle icon change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterCollapse = document.getElementById('filtersCollapse');
+    const filterIcon = document.getElementById('filterIcon');
+    
+    filterCollapse.addEventListener('hide.bs.collapse', function () {
+        filterIcon.classList.remove('fa-chevron-up');
+        filterIcon.classList.add('fa-chevron-down');
+    });
+    
+    filterCollapse.addEventListener('show.bs.collapse', function () {
+        filterIcon.classList.remove('fa-chevron-down');
+        filterIcon.classList.add('fa-chevron-up');
+    });
+});
+
 function deleteRequest(requestId) {
     const form = document.getElementById('deleteForm');
     form.action = `{{ url('admin/plan-purchase-requests') }}/${requestId}`;

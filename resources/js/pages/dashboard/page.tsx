@@ -10,6 +10,9 @@ import { Badge } from "../../components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select"
 import TestComponent from "../../components/TestComponent"
 import MathTutor from "../MathTutor"
+import PurchasePlanModal from "../../components/PurchasePlanModal"
+import Swal from "sweetalert2"
+import "sweetalert2/dist/sweetalert2.min.css"
 import {
   GraduationCap,
   Brain,
@@ -43,24 +46,13 @@ import {
   Smartphone,
   Upload,
   Plus,
-  Minus,
   Search,
   Menu,
   ChevronDown,
-  PlayCircle,
-  PauseCircle,
-  RotateCcw,
-  Award,
-  Timer,
-  FileText,
-  TrendingDown,
-  Activity,
-  Filter,
-  SortAsc,
-  Calendar as CalendarIcon,
   ExternalLink,
-  Calculator
+  Calculator,
 } from "lucide-react"
+
 
 interface UserPlan {
   id: string
@@ -105,9 +97,9 @@ export default function UserDashboard() {
   const [activeSection, setActiveSection] = useState("overview")
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showCurrentPassword, setShowNewPassword] = useState(false)
+  const [showNewPassword, setShowConfirmPassword] = useState(false)
+  const [showConfirmPassword, setShowCurrentPassword] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const [dataLoading, setDataLoading] = useState(true)
@@ -130,10 +122,8 @@ export default function UserDashboard() {
     lastLogin: "",
     createdAt: "",
     updatedAt: "",
-    currentPlan: undefined // Explicitly set to undefined initially
+    currentPlan: undefined, // Explicitly set to undefined initially
   })
-
-
 
   const [editData, setEditData] = useState({ ...userData })
   const [passwordData, setPasswordData] = useState({
@@ -141,7 +131,7 @@ export default function UserDashboard() {
     newPassword: "",
     confirmPassword: "",
   })
-  const [cities, setCities] = useState<{id: number, name: string}[]>([])
+  const [cities, setCities] = useState<{ id: number; name: string }[]>([])
   const [loadingCities, setLoadingCities] = useState(false)
   const [newSubject, setNewSubject] = useState("")
   const [newGoal, setNewGoal] = useState("")
@@ -158,6 +148,11 @@ export default function UserDashboard() {
   const [availablePlans, setAvailablePlans] = useState<any[]>([])
   const [plansLoading, setPlansLoading] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<any>(null)
+  const [contactInfo, setContactInfo] = useState({
+    phone: "",
+    telegramUsername: "",
+  })
+  const [showContactForm, setShowContactForm] = useState(false)
 
   // Test completion callback for the TestComponent
   const handleTestComplete = (result: any) => {
@@ -181,7 +176,7 @@ export default function UserDashboard() {
           // Store both ID and name for proper mapping
           const cityList = regions.map((region: any) => ({
             id: region.id,
-            name: region.name || region.city || region.title
+            name: region.name || region.city || region.title,
           }))
           setCities(cityList)
         } else {
@@ -212,7 +207,7 @@ export default function UserDashboard() {
     if (newSubject.trim() && !editData.subjects.includes(newSubject.trim())) {
       setEditData({
         ...editData,
-        subjects: [...editData.subjects, newSubject.trim()]
+        subjects: [...editData.subjects, newSubject.trim()],
       })
       setNewSubject("")
     }
@@ -221,7 +216,7 @@ export default function UserDashboard() {
   const removeSubject = (index: number) => {
     setEditData({
       ...editData,
-      subjects: editData.subjects.filter((_, i) => i !== index)
+      subjects: editData.subjects.filter((_, i) => i !== index),
     })
   }
 
@@ -229,7 +224,7 @@ export default function UserDashboard() {
     if (newGoal.trim() && !editData.goals.includes(newGoal.trim())) {
       setEditData({
         ...editData,
-        goals: [...editData.goals, newGoal.trim()]
+        goals: [...editData.goals, newGoal.trim()],
       })
       setNewGoal("")
     }
@@ -238,7 +233,7 @@ export default function UserDashboard() {
   const removeGoal = (index: number) => {
     setEditData({
       ...editData,
-      goals: editData.goals.filter((_, i) => i !== index)
+      goals: editData.goals.filter((_, i) => i !== index),
     })
   }
 
@@ -277,26 +272,26 @@ export default function UserDashboard() {
       })
 
       // Get CSRF token from meta tag
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
 
       // Create FormData for file upload support
       const formData = new FormData()
-      
+
       // Add method spoofing for PATCH request
       formData.append("_method", "PATCH")
-      
+
       // Add user fields
       formData.append("name", editData.fullName || "")
       formData.append("email", userData.email) // Include email even though it's readonly
       formData.append("phone", editData.phone || "")
-      
+
       // Add user_data fields
       formData.append("region_id", editData.city || "")
       formData.append("date_of_birth", editData.dateOfBirth || "")
       formData.append("occupation", editData.occupation || "")
       formData.append("education_level", editData.educationLevel || "university")
       formData.append("current_grade", editData.currentGrade || "")
-      
+
       // Handle arrays properly for FormData
       if (editData.subjects && editData.subjects.length > 0) {
         editData.subjects.forEach((subject, index) => {
@@ -306,7 +301,7 @@ export default function UserDashboard() {
         // Send empty array
         formData.append("subjects[]", "")
       }
-      
+
       if (editData.goals && editData.goals.length > 0) {
         editData.goals.forEach((goal, index) => {
           formData.append(`goals[${index}]`, goal)
@@ -349,35 +344,43 @@ export default function UserDashboard() {
             email: data.data.email || editData.email,
             phone: data.data.phone || editData.phone,
             city: data.data.user_data?.region_id?.toString() || editData.city,
-            dateOfBirth: data.data.user_data?.date_of_birth ? new Date(data.data.user_data.date_of_birth).toISOString().split("T")[0] : editData.dateOfBirth,
+            dateOfBirth: data.data.user_data?.date_of_birth
+              ? new Date(data.data.user_data.date_of_birth).toISOString().split("T")[0]
+              : editData.dateOfBirth,
             occupation: data.data.user_data?.occupation || editData.occupation,
             educationLevel: data.data.user_data?.education_level || editData.educationLevel,
             currentGrade: data.data.user_data?.current_grade || editData.currentGrade,
             subjects: data.data.user_data?.subjects || editData.subjects,
             goals: data.data.user_data?.goals || editData.goals,
-            avatar: data.data.avatar ? `/storage/${data.data.avatar}` : (editData.avatar instanceof File ? editData.avatar : editData.avatar),
+            avatar: data.data.avatar
+              ? `/storage/${data.data.avatar}`
+              : editData.avatar instanceof File
+                ? editData.avatar
+                : editData.avatar,
             joinDate: userData.joinDate,
             lastLogin: userData.lastLogin,
             emailVerifiedAt: data.data.email_verified_at || userData.emailVerifiedAt,
             createdAt: userData.createdAt,
             updatedAt: data.data.updated_at || userData.updatedAt,
-            currentPlan: data.data.current_plan ? {
-              id: data.data.current_plan.id.toString(),
-              plan_id: data.data.current_plan.plan_id.toString(),
-              name: data.data.current_plan.name,
-              slug: data.data.current_plan.slug,
-              price: data.data.current_plan.price,
-              duration: data.data.current_plan.duration,
-              description: data.data.current_plan.description,
-              features: data.data.current_plan.features || [],
-              assessments_limit: data.data.current_plan.assessments_limit,
-              lessons_limit: data.data.current_plan.lessons_limit,
-              ai_hints_limit: data.data.current_plan.ai_hints_limit,
-              subjects_limit: data.data.current_plan.subjects_limit,
-              starts_at: data.data.current_plan.starts_at,
-              ends_at: data.data.current_plan.ends_at,
-              is_active: data.data.current_plan.is_active,
-            } : userData.currentPlan,
+            currentPlan: data.data.current_plan
+              ? {
+                  id: data.data.current_plan.id.toString(),
+                  plan_id: data.data.current_plan.plan_id.toString(),
+                  name: data.data.current_plan.name,
+                  slug: data.data.current_plan.slug,
+                  price: data.data.current_plan.price,
+                  duration: data.data.current_plan.duration,
+                  description: data.data.current_plan.description,
+                  features: data.data.current_plan.features || [],
+                  assessments_limit: data.data.current_plan.assessments_limit,
+                  lessons_limit: data.data.current_plan.lessons_limit,
+                  ai_hints_limit: data.data.current_plan.ai_hints_limit,
+                  subjects_limit: data.data.current_plan.subjects_limit,
+                  starts_at: data.data.current_plan.starts_at,
+                  ends_at: data.data.current_plan.ends_at,
+                  is_active: data.data.current_plan.is_active,
+                }
+              : userData.currentPlan,
           }
           setUserData(updatedUserData)
           setEditData(updatedUserData)
@@ -441,7 +444,9 @@ export default function UserDashboard() {
           email: data.data.email || "",
           phone: data.data.phone || "",
           city: data.data.user_data?.region_id?.toString() || "", // Get region_id from user_data
-          dateOfBirth: data.data.user_data?.date_of_birth ? new Date(data.data.user_data.date_of_birth).toISOString().split("T")[0] : "",
+          dateOfBirth: data.data.user_data?.date_of_birth
+            ? new Date(data.data.user_data.date_of_birth).toISOString().split("T")[0]
+            : "",
           occupation: data.data.user_data?.occupation || "",
           educationLevel: data.data.user_data?.education_level || "university",
           currentGrade: data.data.user_data?.current_grade || "",
@@ -453,23 +458,25 @@ export default function UserDashboard() {
           emailVerifiedAt: data.data.email_verified_at,
           createdAt: data.data.created_at || "",
           updatedAt: data.data.updated_at || "",
-          currentPlan: data.data.current_plan ? {
-            id: data.data.current_plan.id.toString(),
-            plan_id: data.data.current_plan.plan_id.toString(),
-            name: data.data.current_plan.name,
-            slug: data.data.current_plan.slug,
-            price: data.data.current_plan.price,
-            duration: data.data.current_plan.duration,
-            description: data.data.current_plan.description,
-            features: data.data.current_plan.features || [],
-            assessments_limit: data.data.current_plan.assessments_limit,
-            lessons_limit: data.data.current_plan.lessons_limit,
-            ai_hints_limit: data.data.current_plan.ai_hints_limit,
-            subjects_limit: data.data.current_plan.subjects_limit,
-            starts_at: data.data.current_plan.starts_at,
-            ends_at: data.data.current_plan.ends_at,
-            is_active: data.data.current_plan.is_active,
-          } : undefined,
+          currentPlan: data.data.current_plan
+            ? {
+                id: data.data.current_plan.id.toString(),
+                plan_id: data.data.current_plan.plan_id.toString(),
+                name: data.data.current_plan.name,
+                slug: data.data.current_plan.slug,
+                price: data.data.current_plan.price,
+                duration: data.data.current_plan.duration,
+                description: data.data.current_plan.description,
+                features: data.data.current_plan.features || [],
+                assessments_limit: data.data.current_plan.assessments_limit,
+                lessons_limit: data.data.current_plan.lessons_limit,
+                ai_hints_limit: data.data.current_plan.ai_hints_limit,
+                subjects_limit: data.data.current_plan.subjects_limit,
+                starts_at: data.data.current_plan.starts_at,
+                ends_at: data.data.current_plan.ends_at,
+                is_active: data.data.current_plan.is_active,
+              }
+            : undefined,
         }
 
         setUserData(mappedUserData)
@@ -494,21 +501,21 @@ export default function UserDashboard() {
   const fetchUsageStats = async () => {
     setUsageLoading(true)
     try {
-      const response = await fetch('/api/user-tests/assessment-status', {
-        method: 'GET',
+      const response = await fetch("/api/user-tests/assessment-status", {
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest'
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
         },
-        credentials: 'include'
+        credentials: "include",
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         setUsageStats(data.data)
       }
     } catch (error) {
-      console.error('Error fetching usage stats:', error)
+      console.error("Error fetching usage stats:", error)
     } finally {
       setUsageLoading(false)
     }
@@ -518,35 +525,29 @@ export default function UserDashboard() {
     setPlanLoading(true)
     try {
       // Ensure CSRF cookie is set
-      await fetch('/sanctum/csrf-cookie', {
-        credentials: 'include'
+      await fetch("/sanctum/csrf-cookie", {
+        credentials: "include",
       })
-      
+
       // Get CSRF token
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
 
-      
-      const response = await fetch('/api/user-plan/current', {
-        method: 'GET',
+      const response = await fetch("/api/user-plan/current", {
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || ''
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrfToken || "",
         },
-        credentials: 'include'
+        credentials: "include",
       })
-      
 
-      
       if (response.ok) {
         const data = await response.json()
 
-        
         if (data.success && data.data) {
-
           // Update userData with current plan information
-          setUserData(prev => {
+          setUserData((prev) => {
             const updated = {
               ...prev,
               currentPlan: {
@@ -554,7 +555,7 @@ export default function UserDashboard() {
                 plan_id: data.data.plan_id.toString(),
                 name: data.data.name,
                 slug: data.data.slug,
-                price: parseFloat(data.data.price),
+                price: Number.parseFloat(data.data.price),
                 duration: data.data.duration,
                 description: data.data.description,
                 features: Array.isArray(data.data.features) ? data.data.features : [],
@@ -562,52 +563,52 @@ export default function UserDashboard() {
                 lessons_limit: data.data.limits.lessons_limit,
                 ai_hints_limit: data.data.limits.ai_hints_limit,
                 subjects_limit: data.data.limits.subjects_limit,
-                starts_at: data.data.dates.starts_at ? data.data.dates.starts_at.split('T')[0] : null,
-                ends_at: data.data.dates.ends_at ? data.data.dates.ends_at.split('T')[0] : null,
+                starts_at: data.data.dates.starts_at ? data.data.dates.starts_at.split("T")[0] : null,
+                ends_at: data.data.dates.ends_at ? data.data.dates.ends_at.split("T")[0] : null,
                 is_active: Boolean(data.data.is_active),
-              }
+              },
             }
 
             return updated
           })
-          
+
           // Also update usageStats with more detailed information
-          setUsageStats(prev => ({
+          setUsageStats((prev) => ({
             ...prev,
             current_plan: {
               name: data.data.name,
               assessments_limit: data.data.limits.assessments_limit,
               assessments_used: data.data.usage.assessments_used,
               lessons_used: data.data.usage.lessons_used,
-              ai_hints_used: data.data.usage.ai_hints_used
+              ai_hints_used: data.data.usage.ai_hints_used,
             },
             remaining_assessments: data.data.remaining.assessments,
             can_take_assessment: Boolean(data.data.can_take_assessment),
             usage_percentage: {
-              assessments: data.data.limits.assessments_limit > 0 ? 
-                Math.round((data.data.usage.assessments_used / data.data.limits.assessments_limit) * 100) : 0
-            }
+              assessments:
+                data.data.limits.assessments_limit > 0
+                  ? Math.round((data.data.usage.assessments_used / data.data.limits.assessments_limit) * 100)
+                  : 0,
+            },
           }))
-          
-
         } else {
           // Check if it's an authentication issue
           if (response.status === 401) {
-            console.error('Authentication failed - user might not be logged in')
+            console.error("Authentication failed - user might not be logged in")
           }
         }
       } else {
         // Check for specific error types
         if (response.status === 401) {
-          console.error('Authentication error - redirecting to login might be needed')
+          console.error("Authentication error - redirecting to login might be needed")
         } else if (response.status === 404) {
-          console.error('API endpoint not found - check route registration')
+          console.error("API endpoint not found - check route registration")
         } else if (response.status === 500) {
-          console.error('Server error - check Laravel logs')
+          console.error("Server error - check Laravel logs")
         }
       }
     } catch (error) {
-      console.error('Error fetching current plan:', error)
+      console.error("Error fetching current plan:", error)
     } finally {
       setPlanLoading(false)
     }
@@ -617,23 +618,23 @@ export default function UserDashboard() {
     setPlansLoading(true)
     try {
       // Ensure CSRF cookie is set
-      await fetch('/sanctum/csrf-cookie', {
-        credentials: 'include'
+      await fetch("/sanctum/csrf-cookie", {
+        credentials: "include",
       })
-      
+
       // Get CSRF token
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      
-      const response = await fetch('/api/plans', {
-        method: 'GET',
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
+
+      const response = await fetch("/api/plans", {
+        method: "GET",
         headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || ''
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrfToken || "",
         },
-        credentials: 'include'
+        credentials: "include",
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         if (data.success && data.data) {
@@ -641,27 +642,25 @@ export default function UserDashboard() {
         }
       }
     } catch (error) {
-      console.error('Error fetching available plans:', error)
+      console.error("Error fetching available plans:", error)
     } finally {
       setPlansLoading(false)
     }
   }
 
-
-
   // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element
-      if (!target.closest('[data-dropdown]')) {
+      if (!target.closest("[data-dropdown]")) {
         setShowNotifications(false)
         setShowUserMenu(false)
         setShowQuickActions(false)
       }
     }
-    
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
   const handleUpgradePlan = async () => {
@@ -673,107 +672,163 @@ export default function UserDashboard() {
     setSelectedPlan(plan)
   }
 
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyboard = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowPlanModal(false)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyboard)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyboard)
+    }
+  }, [])
+
   const handleConfirmPlanSelection = async () => {
     if (selectedPlan) {
-      try {
-        // Show loading state
-        setPlansLoading(true)
-        
-        // Get CSRF token
-        const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
-        const csrfToken = csrfTokenElement?.content || ''
+      // Show contact form instead of directly redirecting to Telegram
+      setShowContactForm(true)
+    }
+  }
 
-        // First, check if user has connected their Telegram account
-        // If not, prompt them to go to the Telegram bot
-        if (!userData.telegram_chat_id) {
-          const goToBot = confirm("Telegram hisobingizni bog'lash uchun bizning Telegram botimizga o'tishingiz kerak. Hozir o'tishni xohlaysizmi?")
-          
-          if (goToBot) {
-            // Open Telegram bot in new tab using your specific bot username
-            const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'math_ai_integrator_bot'
-            window.open(`https://t.me/${botUsername}`, '_blank')
-            
-            // Wait a moment for user to get their chat ID
-            alert("Telegram botga o'tdingiz. Botdan yuborilgan xabardagi chat ID ni nusxalab oling va keyingi qadamda kiriting.")
-            
-            // Prompt for chat ID after they've had time to get it
-            const telegramChatId = prompt("Endi chat ID ni kiriting (Telegram bot xabarida ko'rsatilgan):")
-            
-            if (!telegramChatId) {
-              alert("Chat ID ni kiritishingiz kerak!")
-              setPlansLoading(false)
-              return
-            }
+  const formatContactPhoneNumber = (value: string) => {
+    // Remove all non-digits
+    const digits = value.replace(/\D/g, "")
 
-            // Connect Telegram account
-            const connectResponse = await fetch("/api/telegram/connect-account", {
-              method: "POST",
-              headers: {
-                "Accept": "application/json",
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-                "X-CSRF-TOKEN": csrfToken,
-              },
-              credentials: "include",
-              body: JSON.stringify({
-                telegram_chat_id: telegramChatId
-              })
-            })
+    // Limit to 12 digits (998 + 9 digits)
+    const limitedDigits = digits.slice(0, 12)
 
-            const connectData = await connectResponse.json()
-            
-            if (!connectData.success) {
-              alert(connectData.message || "Telegram hisobingizni bog'lashda xatolik yuz berdi.")
-              setPlansLoading(false)
-              return
-            }
-          } else {
-            alert("Telegram hisobingizni bog'lash uchun chat ID kerak!")
-            setPlansLoading(false)
-            return
-          }
-        }
+    // If starts with 998, format as +998 XX XXX XX XX
+    if (limitedDigits.startsWith("998")) {
+      const match = limitedDigits.match(/^998(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})$/)
+      if (match) {
+        return `+998 ${match[1]}${match[2] ? " " + match[2] : ""}${match[3] ? " " + match[3] : ""}${match[4] ? " " + match[4] : ""}`.trim()
+      }
+    }
 
-        // Send request to our API endpoint
+    // If doesn't start with 998, add it and format
+    if (limitedDigits.length > 0 && !limitedDigits.startsWith("998")) {
+      const withCountryCode = "998" + limitedDigits.slice(0, 9) // Limit to 9 digits after 998
+      const match = withCountryCode.match(/^998(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})$/)
+      if (match) {
+        return `+998 ${match[1]}${match[2] ? " " + match[2] : ""}${match[3] ? " " + match[3] : ""}${match[4] ? " " + match[4] : ""}`.trim()
+      }
+    }
+
+    return value
+  }
+
+  const handleContactPhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatContactPhoneNumber(e.target.value)
+    setContactInfo({ ...contactInfo, phone: formatted })
+  }
+
+  const handleTelegramUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value
+    // Remove @ if user types it
+    if (value.startsWith("@")) {
+      value = value.slice(1)
+    }
+    // Only allow alphanumeric characters and underscores
+    value = value.replace(/[^a-zA-Z0-9_]/g, "")
+    setContactInfo({ ...contactInfo, telegramUsername: value })
+  }
+
+  const handleSubmitContactInfo = async () => {
+    // Validate phone number format if provided
+    if (contactInfo.phone && !contactInfo.phone.match(/^\+998 \d{2} \d{3} \d{2} \d{2}$/)) {
+      alert("Iltimos, telefon raqamini to'g'ri formatda kiriting: +998 XX XXX XX XX")
+      return
+    }
+
+    // Validate telegram username if provided
+    if (contactInfo.telegramUsername && contactInfo.telegramUsername.length < 5) {
+      alert("Telegram username kamida 5 ta belgidan iborat bo'lishi kerak")
+      return
+    }
+
+    if (!contactInfo.phone && !contactInfo.telegramUsername) {
+      alert("Iltimos, telefon raqamingiz yoki Telegram username kiriting!")
+      return
+    }
+
+    try {
+        // Submit contact info to backend
+        await fetch("/sanctum/csrf-cookie", {
+          credentials: "include",
+        })
+
+        const csrfToken = document
+          .querySelector('meta[name="csrf-token"]')
+          ?.getAttribute("content")
+
         const response = await fetch("/api/telegram/request-plan-purchase", {
           method: "POST",
           headers: {
-            "Accept": "application/json",
             "Content-Type": "application/json",
+            Accept: "application/json",
             "X-Requested-With": "XMLHttpRequest",
-            "X-CSRF-TOKEN": csrfToken,
+            "X-CSRF-TOKEN": csrfToken || "",
           },
           credentials: "include",
           body: JSON.stringify({
-            plan_id: selectedPlan.id
-          })
+            plan_id: selectedPlan.id,
+            phone: contactInfo.phone,
+            telegram_username: contactInfo.telegramUsername,
+          }),
         })
 
         const data = await response.json()
-        
-        if (data.success) {
-          // Show success message
-          alert("So'rovingiz yuborildi! Admin tez orada siz bilan bog'lanadi.")
+
+        if (response.ok && data.success) {
+          // ✅ Success message with SweetAlert2
+          Swal.fire({
+            icon: "success",
+            title: "Muvaffaqiyatli!",
+            text: "So'rovingiz yuborildi. Tez orada admin siz bilan bog'lanadi.",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#16a34a", // Tailwind green-600
+            timer: 4000,
+            timerProgressBar: true,
+          })
+
+          // Reset states
+          setShowPlanModal(false)
+          setShowContactForm(false)
+          setSelectedPlan(null)
+          setContactInfo({ phone: "", telegramUsername: "" })
         } else {
-          // Show error message
-          alert(data.message || "So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
+          // ❌ Error message
+          Swal.fire({
+            icon: "error",
+            title: "Xatolik",
+            text:
+              data.message ||
+              "Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#dc2626", // Tailwind red-600
+          })
         }
       } catch (error) {
-        console.error("Error requesting plan purchase:", error)
-        alert("So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
-      } finally {
-        setPlansLoading(false)
-        setShowPlanModal(false)
-        setSelectedPlan(null)
+        console.error("Error submitting contact info:", error)
+        Swal.fire({
+          icon: "error",
+          title: "Xatolik yuz berdi",
+          text: "Iltimos, keyinroq qayta urinib ko'ring.",
+          confirmButtonText: "Yopish",
+          confirmButtonColor: "#dc2626",
+        })
       }
     }
-  }
 
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyboard = (event: KeyboardEvent) => {
       // Ctrl+K or Cmd+K to focus search
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+      if ((event.ctrlKey || event.metaKey) && event.key === "k") {
         event.preventDefault()
         const searchInput = document.querySelector('input[placeholder*="Qidirish"]') as HTMLInputElement
         if (searchInput) {
@@ -781,16 +836,16 @@ export default function UserDashboard() {
         }
       }
       // Escape to close dropdowns
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setShowNotifications(false)
         setShowUserMenu(false)
         setShowQuickActions(false)
         setIsMobileMenuOpen(false)
       }
     }
-    
-    document.addEventListener('keydown', handleKeyboard)
-    return () => document.removeEventListener('keydown', handleKeyboard)
+
+    document.addEventListener("keydown", handleKeyboard)
+    return () => document.removeEventListener("keydown", handleKeyboard)
   }, [])
 
   const stats = {
@@ -849,7 +904,7 @@ export default function UserDashboard() {
       })
 
       // Get CSRF token from meta tag
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
 
       const response = await fetch("/profile/password", {
         method: "PATCH",
@@ -893,7 +948,7 @@ export default function UserDashboard() {
 
   const handleLogout = async () => {
     const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
-    const csrfToken = csrfTokenElement?.content || ''
+    const csrfToken = csrfTokenElement?.content || ""
 
     try {
       await fetch("/logout", {
@@ -911,8 +966,6 @@ export default function UserDashboard() {
       window.location.href = "/"
     }
   }
-
-
 
   // renderTests function removed - now using TestComponent
 
@@ -955,8 +1008,6 @@ export default function UserDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-
-          
           {planLoading ? (
             <div className="text-center py-8">
               <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
@@ -984,7 +1035,7 @@ export default function UserDashboard() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Usage Statistics Grid */}
               {usageLoading ? (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
@@ -1004,23 +1055,26 @@ export default function UserDashboard() {
                     </div>
                     <div className="text-lg font-semibold text-indigo-800">
                       {usageStats ? (
-                        <span className={`${
-                          usageStats.can_take_assessment ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {usageStats.remaining_assessments} / {userData.currentPlan.assessments_limit === 999 ? '∞' : userData.currentPlan.assessments_limit}
+                        <span className={`${usageStats.can_take_assessment ? "text-green-600" : "text-red-600"}`}>
+                          {usageStats.remaining_assessments} /{" "}
+                          {userData.currentPlan.assessments_limit === 999
+                            ? "∞"
+                            : userData.currentPlan.assessments_limit}
                         </span>
+                      ) : userData.currentPlan.assessments_limit === 999 ? (
+                        "Cheksiz"
                       ) : (
-                        userData.currentPlan.assessments_limit === 999 ? "Cheksiz" : userData.currentPlan.assessments_limit
+                        userData.currentPlan.assessments_limit
                       )}
                     </div>
                     {usageStats && userData.currentPlan.assessments_limit < 999 && (
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                        <div 
+                        <div
                           className={`h-2 rounded-full transition-all duration-300 ${
-                            usageStats.can_take_assessment ? 'bg-green-500' : 'bg-red-500'
+                            usageStats.can_take_assessment ? "bg-green-500" : "bg-red-500"
                           }`}
                           style={{
-                            width: `${Math.max(5, (usageStats.remaining_assessments / userData.currentPlan.assessments_limit) * 100)}%`
+                            width: `${Math.max(5, (usageStats.remaining_assessments / userData.currentPlan.assessments_limit) * 100)}%`,
                           }}
                         ></div>
                       </div>
@@ -1070,7 +1124,7 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-              
+
               {userData.currentPlan.features && userData.currentPlan.features.length > 0 && (
                 <div className="mt-4">
                   <h4 className="font-semibold text-indigo-800 mb-2">Xususiyatlar:</h4>
@@ -1084,37 +1138,41 @@ export default function UserDashboard() {
                   </div>
                 </div>
               )}
-              
+
               <div className="flex items-center justify-between mt-6 pt-4 border-t border-indigo-200">
                 <div className="flex space-x-6">
                   <div>
                     <div className="text-sm text-gray-600">Boshlangan sana</div>
                     <div className="font-medium text-indigo-800">
-                      {userData.currentPlan.starts_at ? new Date(userData.currentPlan.starts_at).toLocaleDateString('uz-UZ') : "Ma'lum emas"}
+                      {userData.currentPlan.starts_at
+                        ? new Date(userData.currentPlan.starts_at).toLocaleDateString("uz-UZ")
+                        : "Ma'lum emas"}
                     </div>
                   </div>
                   {userData.currentPlan.ends_at && (
                     <div>
                       <div className="text-sm text-gray-600">Tugash sanasi</div>
                       <div className="font-medium text-indigo-800">
-                        {new Date(userData.currentPlan.ends_at).toLocaleDateString('uz-UZ')}
+                        {new Date(userData.currentPlan.ends_at).toLocaleDateString("uz-UZ")}
                       </div>
                     </div>
                   )}
                   <div>
                     <div className="text-sm text-gray-600">Holat</div>
-                    <Badge className={`${
-                      userData.currentPlan.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                    }`}>
+                    <Badge
+                      className={`${
+                        userData.currentPlan.is_active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                      }`}
+                    >
                       {userData.currentPlan.is_active ? "Faol" : "Faol emas"}
                     </Badge>
                   </div>
                 </div>
-                
+
                 {/* Upgrade Button for Free and Premium users */}
                 <div className="flex items-center space-x-2">
-                  {(userData.currentPlan.slug === 'free' || userData.currentPlan.slug === 'premium') && (
-                    <Button 
+                  {(userData.currentPlan.slug === "free" || userData.currentPlan.slug === "premium") && (
+                    <Button
                       onClick={handleUpgradePlan}
                       className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white flex items-center space-x-2"
                     >
@@ -1123,7 +1181,7 @@ export default function UserDashboard() {
                     </Button>
                   )}
                   {usageStats && !usageStats.can_take_assessment && (
-                    <Button 
+                    <Button
                       onClick={handleUpgradePlan}
                       className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white flex items-center space-x-2"
                     >
@@ -1141,7 +1199,7 @@ export default function UserDashboard() {
               </div>
               <h3 className="text-lg font-semibold text-indigo-900 mb-2">Hech qanday faol reja yo'q</h3>
               <p className="text-indigo-600 mb-4">Ta'lim rejasini tanlang va o'qishni boshlang!</p>
-              <Button 
+              <Button
                 onClick={handleUpgradePlan}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
               >
@@ -1327,11 +1385,11 @@ export default function UserDashboard() {
                     editData.avatar
                       ? editData.avatar instanceof File
                         ? URL.createObjectURL(editData.avatar)
-                        : editData.avatar.startsWith('http') || editData.avatar.startsWith('/storage')
-                        ? editData.avatar
-                        : editData.avatar
-                        ? `/storage/${editData.avatar}`
-                        : "images/avatar.svg"
+                        : editData.avatar.startsWith("http") || editData.avatar.startsWith("/storage")
+                          ? editData.avatar
+                          : editData.avatar
+                            ? `/storage/${editData.avatar}`
+                            : "images/avatar.svg"
                       : "images/avatar.svg"
                   }
                   alt="Profile"
@@ -1367,7 +1425,8 @@ export default function UserDashboard() {
                 <h3 className="text-xl font-bold">{userData.fullName || "Foydalanuvchi"}</h3>
                 <p className="text-gray-600">{userData.email}</p>
                 <Badge className="mt-2 bg-blue-100 text-blue-800">
-                  {educationLevelOptions.find(level => level.value === userData.educationLevel)?.label || userData.educationLevel}
+                  {educationLevelOptions.find((level) => level.value === userData.educationLevel)?.label ||
+                    userData.educationLevel}
                 </Badge>
                 {userData.emailVerifiedAt && (
                   <Badge className="mt-2 ml-2 bg-green-100 text-green-800">Email tasdiqlangan</Badge>
@@ -1442,10 +1501,10 @@ export default function UserDashboard() {
                 ) : (
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <Input 
-                      value={cities.find(c => c.id.toString() === userData.city)?.name || userData.city} 
-                      disabled={true} 
-                      className="!pl-10 w-64 font-medium text-black" 
+                    <Input
+                      value={cities.find((c) => c.id.toString() === userData.city)?.name || userData.city}
+                      disabled={true}
+                      className="!pl-10 w-64 font-medium text-black"
                     />
                   </div>
                 )}
@@ -1508,10 +1567,13 @@ export default function UserDashboard() {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <Input 
-                    value={educationLevelOptions.find(level => level.value === userData.educationLevel)?.label || userData.educationLevel} 
-                    disabled={true} 
-                    className="w-64 font-medium text-black" 
+                  <Input
+                    value={
+                      educationLevelOptions.find((level) => level.value === userData.educationLevel)?.label ||
+                      userData.educationLevel
+                    }
+                    disabled={true}
+                    className="w-64 font-medium text-black"
                   />
                 )}
               </div>
@@ -1543,7 +1605,7 @@ export default function UserDashboard() {
                         placeholder="Yangi fan qo'shish"
                         className="flex-1 font-medium text-gray-900"
                         onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault()
                             addSubject()
                           }
@@ -1554,7 +1616,7 @@ export default function UserDashboard() {
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 bg-transparent"
                       >
                         <Plus className="h-4 w-4" />
                         Qo'shish
@@ -1597,7 +1659,7 @@ export default function UserDashboard() {
                         placeholder="Yangi maqsad qo'shish"
                         className="flex-1 font-medium text-gray-900"
                         onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault()
                             addGoal()
                           }
@@ -1608,7 +1670,7 @@ export default function UserDashboard() {
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 bg-transparent"
                       >
                         <Plus className="h-4 w-4" />
                         Qo'shish
@@ -1894,7 +1956,9 @@ export default function UserDashboard() {
                 <GraduationCap className="h-9 w-9 text-white" />
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Ta'lim Tizimi</h1>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Ta'lim Tizimi
+                </h1>
                 <div className="flex items-center space-x-2">
                   <Brain className="h-4 w-4 text-blue-500" />
                   <span className="text-sm font-medium text-gray-600">AI Dashboard</span>
@@ -1918,14 +1982,14 @@ export default function UserDashboard() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="block w-full pl-12 pr-20 py-3 border border-gray-200 rounded-xl leading-5 bg-white/80 backdrop-blur-sm placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium text-black shadow-sm hover:shadow-md transition-all duration-200"
                   onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setSearchQuery('')
+                    if (e.key === "Escape") {
+                      setSearchQuery("")
                     }
                   }}
                 />
                 {searchQuery && (
                   <button
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => setSearchQuery("")}
                     className="absolute inset-y-0 right-12 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                   >
                     <X className="h-4 w-4" />
@@ -1942,9 +2006,9 @@ export default function UserDashboard() {
             {/* Enhanced Right side actions */}
             <div className="flex items-center space-x-2">
               {/* Mobile menu button */}
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="md:hidden hover:bg-blue-50"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
@@ -1953,16 +2017,16 @@ export default function UserDashboard() {
 
               {/* Quick Actions */}
               <div className="relative hidden lg:block" data-dropdown>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowQuickActions(!showQuickActions)}
                   className="hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-colors"
                 >
                   <Plus className="h-5 w-5" />
                   <span className="ml-1 text-sm font-medium">Yangi</span>
                 </Button>
-                
+
                 {/* Quick Actions Dropdown */}
                 {showQuickActions && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
@@ -1974,11 +2038,11 @@ export default function UserDashboard() {
                         <BookOpen className="h-4 w-4 text-blue-600" />
                         <span>Yangi test yaratish</span>
                       </button>
-                      <button className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 w-full text-left transition-colors">
+                      <button className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-green-50 w-full text-left transition-colors">
                         <Target className="h-4 w-4 text-green-600" />
                         <span>Maqsad qo'shish</span>
                       </button>
-                      <button className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 w-full text-left transition-colors">
+                      <button className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-700 hover:bg-purple-50 w-full text-left transition-colors">
                         <Calendar className="h-4 w-4 text-purple-600" />
                         <span>Dars jadvali</span>
                       </button>
@@ -1989,9 +2053,9 @@ export default function UserDashboard() {
 
               {/* Enhanced Notifications */}
               <div className="relative" data-dropdown>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => {
                     setShowNotifications(!showNotifications)
                     if (!showNotifications && notificationCount > 0) {
@@ -2004,13 +2068,13 @@ export default function UserDashboard() {
                   {notificationCount > 0 && (
                     <>
                       <span className="absolute -top-1 -right-1 h-5 w-5 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full flex items-center justify-center font-semibold animate-pulse">
-                        {notificationCount > 9 ? '9+' : notificationCount}
+                        {notificationCount > 9 ? "9+" : notificationCount}
                       </span>
                       <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-400 rounded-full animate-ping opacity-75"></span>
                     </>
                   )}
                 </Button>
-                
+
                 {/* Enhanced Notifications Dropdown */}
                 {showNotifications && (
                   <div className="absolute right-0 mt-3 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden">
@@ -2018,11 +2082,9 @@ export default function UserDashboard() {
                       <div className="flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-gray-900">Bildirishnomalar</h3>
                         <div className="flex items-center space-x-2">
-                          <Badge className="bg-blue-100 text-blue-800 text-xs">
-                            3 ta yangi
-                          </Badge>
-                          <Button 
-                            variant="ghost" 
+                          <Badge className="bg-blue-100 text-blue-800 text-xs">3 ta yangi</Badge>
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => setShowNotifications(false)}
                             className="h-6 w-6 p-0 hover:bg-gray-200"
@@ -2040,7 +2102,9 @@ export default function UserDashboard() {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-gray-900">Yangi yutuq qo'lga kiritildi! 🎉</p>
-                            <p className="text-sm text-gray-600 mt-1">Siz 7 kunlik o'qish seriyasini yakunladingiz va 50 ochko oldingiz</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Siz 7 kunlik o'qish seriyasini yakunladingiz va 50 ochko oldingiz
+                            </p>
                             <div className="flex items-center justify-between mt-2">
                               <p className="text-xs text-gray-400">2 soat oldin</p>
                               <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
@@ -2055,7 +2119,9 @@ export default function UserDashboard() {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-gray-900">Test muvaffaqiyatli yakunlandi!</p>
-                            <p className="text-sm text-gray-600 mt-1">Matematika testida 92% ball oldingiz. A'lo natija!</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Matematika testida 92% ball oldingiz. A'lo natija!
+                            </p>
                             <div className="flex items-center justify-between mt-2">
                               <p className="text-xs text-gray-400">4 soat oldin</p>
                               <div className="h-2 w-2 bg-green-500 rounded-full"></div>
@@ -2070,7 +2136,9 @@ export default function UserDashboard() {
                           </div>
                           <div className="flex-1">
                             <p className="text-sm font-semibold text-gray-900">Yangi darslar mavjud</p>
-                            <p className="text-sm text-gray-600 mt-1">Fizika bo'limida yangi video darslar va mashqlar qo'shildi</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Fizika bo'limida yangi video darslar va mashqlar qo'shildi
+                            </p>
                             <div className="flex items-center justify-between mt-2">
                               <p className="text-xs text-gray-400">1 kun oldin</p>
                               <div className="h-2 w-2 bg-gray-300 rounded-full"></div>
@@ -2081,7 +2149,7 @@ export default function UserDashboard() {
                     </div>
                     <div className="p-4 border-t border-gray-100 bg-gray-50">
                       <div className="flex space-x-2">
-                        <Button variant="outline" className="flex-1 text-sm hover:bg-white">
+                        <Button variant="outline" className="flex-1 text-sm hover:bg-white bg-transparent">
                           Barchasini belgilash
                         </Button>
                         <Button className="flex-1 text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
@@ -2095,17 +2163,17 @@ export default function UserDashboard() {
 
               {/* Enhanced User Menu */}
               <div className="relative" data-dropdown>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-3 hover:bg-blue-50 transition-all duration-200 p-2 rounded-xl"
                 >
                   <div className="relative">
                     <img
                       src={
-                        userData.avatar && typeof userData.avatar === 'string'
-                          ? userData.avatar.startsWith('http') || userData.avatar.startsWith('/storage')
+                        userData.avatar && typeof userData.avatar === "string"
+                          ? userData.avatar.startsWith("http") || userData.avatar.startsWith("/storage")
                             ? userData.avatar
                             : `/storage/${userData.avatar}`
                           : "images/avatar.svg"
@@ -2116,7 +2184,7 @@ export default function UserDashboard() {
                     <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                   </div>
                   <span className="text-sm font-semibold text-gray-700 hidden lg:block">
-                    {userData.fullName ? userData.fullName.split(' ')[0] : "Foydalanuvchi"}
+                    {userData.fullName ? userData.fullName.split(" ")[0] : "Foydalanuvchi"}
                   </span>
                   <ChevronDown className="h-4 w-4 text-gray-400 hidden lg:block" />
                 </Button>
@@ -2130,8 +2198,8 @@ export default function UserDashboard() {
                         <div className="relative">
                           <img
                             src={
-                              userData.avatar && typeof userData.avatar === 'string'
-                                ? userData.avatar.startsWith('http') || userData.avatar.startsWith('/storage')
+                              userData.avatar && typeof userData.avatar === "string"
+                                ? userData.avatar.startsWith("http") || userData.avatar.startsWith("/storage")
                                   ? userData.avatar
                                   : `/storage/${userData.avatar}`
                                 : "/images/avatar.svg"
@@ -2148,18 +2216,17 @@ export default function UserDashboard() {
                           <p className="text-sm text-gray-600 mb-1">{userData.email}</p>
                           <div className="flex items-center space-x-2">
                             <Badge className="bg-blue-100 text-blue-800 text-xs px-2 py-1">
-                              {educationLevelOptions.find(level => level.value === userData.educationLevel)?.label || 'Talaba'}
+                              {educationLevelOptions.find((level) => level.value === userData.educationLevel)?.label ||
+                                "Talaba"}
                             </Badge>
                             {userData.emailVerifiedAt && (
-                              <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">
-                                ✓ Tasdiqlangan
-                              </Badge>
+                              <Badge className="bg-green-100 text-green-800 text-xs px-2 py-1">✓ Tasdiqlangan</Badge>
                             )}
                           </div>
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Quick Stats */}
                     <div className="p-4 bg-gray-50 border-b border-gray-100">
                       <div className="grid grid-cols-3 gap-4 text-center">
@@ -2181,7 +2248,7 @@ export default function UserDashboard() {
                     <div className="py-2">
                       <button
                         onClick={() => {
-                          setActiveSection('profile')
+                          setActiveSection("profile")
                           setShowUserMenu(false)
                         }}
                         className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-blue-50 w-full text-left transition-colors group"
@@ -2196,7 +2263,7 @@ export default function UserDashboard() {
                       </button>
                       <button
                         onClick={() => {
-                          setActiveSection('security')
+                          setActiveSection("security")
                           setShowUserMenu(false)
                         }}
                         className="flex items-center space-x-3 px-6 py-3 text-sm text-gray-700 hover:bg-orange-50 w-full text-left transition-colors group"
@@ -2303,193 +2370,18 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Plan Selection Modal */}
-      {showPlanModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowPlanModal(false)
-              setSelectedPlan(null)
-            }
-          }}
-        >
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Tarif rejasini tanlang</h2>
-                  <p className="text-gray-600 mt-1">O'zingizga mos keladigan rejani tanlang va admin bilan bog'laning</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowPlanModal(false)
-                    setSelectedPlan(null)
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              {plansLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="border border-gray-200 rounded-xl p-6 animate-pulse">
-                      <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                      <div className="h-8 bg-gray-200 rounded mb-4"></div>
-                      <div className="space-y-2 mb-6">
-                        <div className="h-4 bg-gray-200 rounded"></div>
-                        <div className="h-4 bg-gray-200 rounded"></div>
-                        <div className="h-4 bg-gray-200 rounded"></div>
-                      </div>
-                      <div className="h-10 bg-gray-200 rounded"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {availablePlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                        selectedPlan?.id === plan.id
-                          ? 'border-blue-500 bg-blue-50 shadow-lg'
-                          : plan.slug === userData.currentPlan?.slug
-                          ? 'border-gray-300 bg-gray-50'
-                          : 'border-gray-200 hover:border-blue-300'
-                      }`}
-                      onClick={() => plan.slug !== userData.currentPlan?.slug && handleSelectPlan(plan)}
-                    >
-                      {plan.slug === userData.currentPlan?.slug && (
-                        <div className="flex items-center space-x-2 mb-4">
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          <span className="text-sm font-medium text-green-700">Joriy rejangiz</span>
-                        </div>
-                      )}
-                      
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                        <div className="text-3xl font-bold text-blue-600 mb-2">
-                          {plan.price > 0 ? `${plan.price.toLocaleString()} so'm` : "Bepul"}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {plan.duration > 0 ? `${plan.duration} kun` : "Cheksiz muddatli"}
-                        </div>
-                      </div>
-                      
-                      {plan.description && (
-                        <p className="text-gray-600 mb-4 text-sm">{plan.description}</p>
-                      )}
-                      
-                      <div className="space-y-3 mb-6">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Testlar:</span>
-                          <span className="font-medium text-gray-900">
-                            {plan.assessments_limit === 999 ? "Cheksiz" : plan.assessments_limit}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Darslar:</span>
-                          <span className="font-medium text-gray-900">
-                            {plan.lessons_limit === -1 ? "Cheksiz" : plan.lessons_limit}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">AI yordami:</span>
-                          <span className="font-medium text-gray-900">
-                            {plan.ai_hints_limit === -1 ? "Cheksiz" : plan.ai_hints_limit}
-                          </span>
-                        </div>
-                        {plan.subjects_limit && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Fanlar:</span>
-                            <span className="font-medium text-gray-900">
-                              {plan.subjects_limit === -1 ? "Cheksiz" : plan.subjects_limit}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {plan.features && plan.features.length > 0 && (
-                        <div className="mb-6">
-                          <h4 className="text-sm font-medium text-gray-900 mb-2">Xususiyatlar:</h4>
-                          <div className="space-y-1">
-                            {plan.features.slice(0, 3).map((feature: string, index: number) => (
-                              <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                                <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                <span>{feature}</span>
-                              </div>
-                            ))}
-                            {plan.features.length > 3 && (
-                              <div className="text-sm text-gray-500">+{plan.features.length - 3} boshqa xususiyat</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {plan.slug === userData.currentPlan?.slug ? (
-                        <Button disabled className="w-full bg-gray-100 text-gray-500 cursor-not-allowed">
-                          Joriy reja
-                        </Button>
-                      ) : (
-                        <Button
-                          className={`w-full transition-all duration-200 ${
-                            selectedPlan?.id === plan.id
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleSelectPlan(plan)
-                          }}
-                        >
-                          {selectedPlan?.id === plan.id ? (
-                            <div className="flex items-center space-x-2">
-                              <CheckCircle className="h-4 w-4" />
-                              <span>Tanlangan</span>
-                            </div>
-                          ) : (
-                            "Tanlash"
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              {!plansLoading && availablePlans.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="text-gray-500 mb-4">Hozirda mavjud rejalar yo'q</div>
-                </div>
-              )}
-            </div>
-            
-            {selectedPlan && (
-              <div className="p-6 border-t border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Tanlangan reja: {selectedPlan.name}</h3>
-                    <p className="text-gray-600 text-sm">Admin bilan bog'lanib, rejani faollashtiring</p>
-                  </div>
-                  <Button
-                    onClick={handleConfirmPlanSelection}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex items-center space-x-2"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    <span>Admin bilan bog'lanish</span>
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <PurchasePlanModal
+        isOpen={showPlanModal}
+        onClose={() => {
+          setShowPlanModal(false)
+          setSelectedPlan(null)
+        }}
+        availablePlans={availablePlans}
+        plansLoading={plansLoading}
+        currentPlanSlug={userData.currentPlan?.slug}
+        onPlanSelect={handleSelectPlan}
+        selectedPlan={selectedPlan}
+      />
     </div>
   )
 }

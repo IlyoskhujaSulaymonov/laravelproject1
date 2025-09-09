@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { BlockMath } from "react-katex";
 import "katex/dist/katex.min.css";
 import { create, all, MathNode } from "mathjs";
+import PurchasePlanModal from "../components/PurchasePlanModal";
 
 const math = create(all, {});
 
@@ -1178,16 +1179,11 @@ function detectGraphIntent(input: string): boolean {
 
   const handleConfirmPlanSelection = () => {
     if (selectedPlan) {
-      // Create a message for the admin with selected plan details
-      const message = `Salom! Men ${selectedPlan.name} rejasini tanlashni xohlayman.\n\nReja tafsilotlari:\n- Nomi: ${selectedPlan.name}\n- Narxi: ${selectedPlan.price > 0 ? selectedPlan.price.toLocaleString() + ' so\'m' : 'Bepul'}\n- Muddati: ${selectedPlan.duration > 0 ? selectedPlan.duration + ' kun' : 'Cheksiz'}\n- Testlar: ${selectedPlan.assessments_limit === 999 ? 'Cheksiz' : selectedPlan.assessments_limit}\n- Darslar: ${selectedPlan.lessons_limit === -1 ? 'Cheksiz' : selectedPlan.lessons_limit}\n- AI yordami: ${selectedPlan.ai_hints_limit === -1 ? 'Cheksiz' : selectedPlan.ai_hints_limit}\n\nIltimos, bu rejani faollashtiring.`;
-      
-      const encodedMessage = encodeURIComponent(message);
-      const telegramUrl = `https://t.me/talimtizimi_admin?text=${encodedMessage}`;
-      
-      // Close modal and redirect to Telegram
+      // Instead of sending a message to admin, redirect user to Telegram bot
+      // For now, we'll just close the modal since we're using the new PurchasePlanModal component
+      // which handles the contact form flow
       setShowPlanModal(false);
       setSelectedPlan(null);
-      window.open(telegramUrl, '_blank');
     }
   };
 
@@ -1825,200 +1821,18 @@ function detectGraphIntent(input: string): boolean {
         </div>
       </div>
       
-      {/* Plan Selection Modal */}
-      {showPlanModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowPlanModal(false);
-              setSelectedPlan(null);
-            }
-          }}
-        >
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Tarif rejasini tanlang</h2>
-                  <p className="text-gray-600 mt-1">O'zingizga mos keladigan rejani tanlang va admin bilan bog'laning</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowPlanModal(false);
-                    setSelectedPlan(null);
-                  }}
-                  className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              {plansLoading ? (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                  <p className="mt-2 text-gray-600">Rejalar yuklanmoqda...</p>
-                </div>
-              ) : availablePlans.length > 0 ? (
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {availablePlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`border rounded-xl p-6 cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                        selectedPlan?.id === plan.id
-                          ? 'border-blue-500 bg-blue-50 shadow-lg'
-                          : plan.slug === planSlug
-                          ? 'border-gray-300 bg-gray-50'
-                          : 'border-gray-200 hover:border-blue-300'
-                      }`}
-                      onClick={() => plan.slug !== planSlug && handleSelectPlan(plan)}
-                    >
-                      {plan.slug === planSlug && (
-                        <div className="flex items-center space-x-2 mb-4">
-                          <svg className="h-5 w-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-sm font-medium text-green-700">Joriy rejangiz</span>
-                        </div>
-                      )}
-                      
-                      <div className="mb-4">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                        <div className="text-3xl font-bold text-blue-600 mb-2">
-                          {plan.price > 0 ? `${plan.price.toLocaleString()} so'm` : "Bepul"}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {plan.duration > 0 ? `${plan.duration} kun` : "Cheksiz muddatli"}
-                        </div>
-                      </div>
-                      
-                      {plan.description && (
-                        <p className="text-gray-600 mb-4 text-sm">{plan.description}</p>
-                      )}
-                      
-                      <div className="space-y-3 mb-6">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Testlar:</span>
-                          <span className="font-medium text-gray-900">
-                            {plan.assessments_limit === 999 ? "Cheksiz" : plan.assessments_limit}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Darslar:</span>
-                          <span className="font-medium text-gray-900">
-                            {plan.lessons_limit === -1 ? "Cheksiz" : plan.lessons_limit}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">AI yordami:</span>
-                          <span className="font-medium text-gray-900">
-                            {plan.ai_hints_limit === -1 ? "Cheksiz" : plan.ai_hints_limit}
-                          </span>
-                        </div>
-                        {plan.subjects_limit && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-600">Fanlar:</span>
-                            <span className="font-medium text-gray-900">
-                              {plan.subjects_limit === -1 ? "Cheksiz" : plan.subjects_limit}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {plan.features && plan.features.length > 0 && (
-                        <div className="mb-6">
-                          <h4 className="text-sm font-medium text-gray-900 mb-2">Xususiyatlar:</h4>
-                          <div className="space-y-1">
-                            {plan.features.slice(0, 3).map((feature: string, index: number) => (
-                              <div key={index} className="flex items-center space-x-2 text-sm text-gray-600">
-                                <svg className="h-4 w-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>{feature}</span>
-                              </div>
-                            ))}
-                            {plan.features.length > 3 && (
-                              <div className="text-sm text-gray-500">+{plan.features.length - 3} boshqa xususiyat</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {plan.slug === planSlug ? (
-                        <button disabled className="w-full bg-gray-100 text-gray-500 cursor-not-allowed py-2 px-4 rounded-lg font-medium">
-                          Joriy reja
-                        </button>
-                      ) : (
-                        <button
-                          className={`w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
-                            selectedPlan?.id === plan.id
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSelectPlan(plan);
-                          }}
-                        >
-                          {selectedPlan?.id === plan.id ? (
-                            <div className="flex items-center justify-center space-x-2">
-                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              <span>Tanlangan</span>
-                            </div>
-                          ) : (
-                            "Tanlash"
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-600 mb-4">Hozirda mavjud rejalar yo'q</p>
-                </div>
-              )}
-              
-              {selectedPlan && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900">Tanlangan reja: {selectedPlan.name}</h3>
-                      <p className="text-gray-600">Admin bilan bog'lanib, rejani faollashtiring</p>
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => {
-                          setShowPlanModal(false);
-                          setSelectedPlan(null);
-                        }}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        Bekor qilish
-                      </button>
-                      <button
-                        onClick={handleConfirmPlanSelection}
-                        className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        <span>Admin bilan bog'lanish</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <PurchasePlanModal
+        isOpen={showPlanModal}
+        onClose={() => {
+          setShowPlanModal(false);
+          setSelectedPlan(null);
+        }}
+        availablePlans={availablePlans}
+        plansLoading={plansLoading}
+        currentPlanSlug={planSlug}
+        onPlanSelect={handleSelectPlan}
+        selectedPlan={selectedPlan}
+      />
     </div>
   );
 }

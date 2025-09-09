@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
+import PurchasePlanModal from "@/components/PurchasePlanModal"
 import {
   GraduationCap,
   BookOpen,
@@ -42,11 +43,11 @@ export default function EducationLanding() {
   const [accuracyCount, setAccuracyCount] = useState(0)
   const [email, setEmail] = useState("")
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showPlanModal, setShowPlanModal] = useState(false)
   const [showMobileNav, setShowMobileNav] = useState(false)
   const [availablePlans, setAvailablePlans] = useState<
     Array<{
-      id: number
+      id: string
+      plan_id: string
       name: string
       slug: string
       description: string
@@ -60,7 +61,8 @@ export default function EducationLanding() {
     }>
   >([])
   const [selectedPlan, setSelectedPlan] = useState<{
-    id: number
+    id: string
+    plan_id: string
     name: string
     slug: string
     description: string
@@ -74,6 +76,7 @@ export default function EducationLanding() {
   } | null>(null)
   const [plansLoading, setPlansLoading] = useState(false)
   const [currentPlanSlug, setCurrentPlanSlug] = useState<string | null>(null)
+  const [showPlanModal, setShowPlanModal] = useState(false)
 
   const { isLoggedIn, user, loading, logout } = useAuth()
 
@@ -155,53 +158,53 @@ export default function EducationLanding() {
   const fetchAvailablePlans = async () => {
     setPlansLoading(true)
     try {
-      // Simulate API call with mock data
-      const mockPlans = [
-        {
-          id: 1,
-          name: "Boshlang'ich",
-          slug: "basic",
-          description: "Asosiy imkoniyatlar bilan tanishish",
-          price: 0,
-          duration: 7,
-          features: ["Asosiy testlar", "Video darsliklar"],
-          assessments_limit: 5,
-          lessons_limit: 10,
-          ai_hints_limit: 3,
-          subjects_limit: 2,
-        },
-        {
-          id: 2,
-          name: "Standart",
-          slug: "standard",
-          description: "To'liq imkoniyatlar bilan o'qish",
-          price: 50000,
-          duration: 30,
-          features: ["Barcha testlar", "AI yordamchi", "Shaxsiy mentor"],
-          assessments_limit: 50,
-          lessons_limit: 100,
-          ai_hints_limit: 50,
-          subjects_limit: 5,
-        },
-        {
-          id: 3,
-          name: "Premium",
-          slug: "premium",
-          description: "Cheksiz imkoniyatlar",
-          price: 100000,
-          duration: 90,
-          features: ["Cheksiz testlar", "24/7 AI yordam", "Sertifikat"],
-          assessments_limit: 999,
-          lessons_limit: 999,
-          ai_hints_limit: 999,
-          subjects_limit: 10,
-        },
-      ]
+      // Fetch CSRF cookie first
+      await fetch("/sanctum/csrf-cookie", {
+        credentials: "include",
+      })
 
-      setAvailablePlans(mockPlans)
+      // Get CSRF token
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content")
 
+      const response = await fetch("/api/plans", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRF-TOKEN": csrfToken || "",
+        },
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.data) {
+          setAvailablePlans(data.data)
+        }
+      }
+
+      // If user is logged in, fetch their current plan
       if (isLoggedIn && user) {
-        setCurrentPlanSlug("basic") // Mock current plan
+        try {
+          const planResponse = await fetch("/api/user-plan/current", {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRF-TOKEN": csrfToken || "",
+            },
+            credentials: "include",
+          })
+
+          if (planResponse.ok) {
+            const planData = await planResponse.json()
+            if (planData.success && planData.data) {
+              setCurrentPlanSlug(planData.data.slug)
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching current plan:", error)
+        }
       }
     } catch (error) {
       console.error("Error fetching plans:", error)
@@ -220,115 +223,9 @@ export default function EducationLanding() {
     setShowPlanModal(true)
   }
 
-  const handleConfirmPlanSelection = async () => {
-    if (!selectedPlan) return
-
-    if (!isLoggedIn) {
-      window.location.href = "/login"
-      return
-    }
-
-    try {
-      setPlansLoading(true)
-
-      // Get CSRF token
-      const csrfTokenElement = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement
-      const csrfToken = csrfTokenElement?.content || ''
-
-      // Get user data to check if Telegram is connected
-      const userResponse = await fetch("/user/data", {
-        method: "GET",
-        headers: {
-          "Accept": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-        },
-        credentials: "include",
-      })
-
-      const userData = await userResponse.json()
-
-      // First, check if user has connected their Telegram account
-      // If not, prompt them to go to the Telegram bot
-      if (!userData.telegram_chat_id) {
-        const goToBot = confirm("Telegram hisobingizni bog'lash uchun bizning Telegram botimizga o'tishingiz kerak. Hozir o'tishni xohlaysizmi?")
-        
-        if (goToBot) {
-          // Open Telegram bot in new tab using your specific bot username
-          const botUsername = import.meta.env.VITE_TELEGRAM_BOT_USERNAME || 'math_ai_integrator_bot'
-          window.open(`https://t.me/${botUsername}`, '_blank')
-          
-          // Wait a moment for user to get their chat ID
-          alert("Telegram botga o'tdingiz. Botdan yuborilgan xabardagi chat ID ni nusxalab oling va keyingi qadamda kiriting.")
-          
-          // Prompt for chat ID after they've had time to get it
-          const telegramChatId = prompt("Endi chat ID ni kiriting (Telegram bot xabarida ko'rsatilgan):")
-          
-          if (!telegramChatId) {
-            alert("Chat ID ni kiritishingiz kerak!")
-            setPlansLoading(false)
-            return
-          }
-
-          // Connect Telegram account
-          const connectResponse = await fetch("/api/telegram/connect-account", {
-            method: "POST",
-            headers: {
-              "Accept": "application/json",
-              "Content-Type": "application/json",
-              "X-Requested-With": "XMLHttpRequest",
-              "X-CSRF-TOKEN": csrfToken,
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              telegram_chat_id: telegramChatId
-            })
-          })
-
-          const connectData = await connectResponse.json()
-          
-          if (!connectData.success) {
-            alert(connectData.message || "Telegram hisobingizni bog'lashda xatolik yuz berdi.")
-            setPlansLoading(false)
-            return
-          }
-        } else {
-          alert("Telegram hisobingizni bog'lash uchun chat ID kerak!")
-          setPlansLoading(false)
-          return
-        }
-      }
-
-      // Send request to our API endpoint
-      const response = await fetch("/api/telegram/request-plan-purchase", {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-          "Content-Type": "application/json",
-          "X-Requested-With": "XMLHttpRequest",
-          "X-CSRF-TOKEN": csrfToken,
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          plan_id: selectedPlan.id
-        })
-      })
-
-      const data = await response.json()
-      
-      if (data.success) {
-        // Show success message
-        alert("So'rovingiz yuborildi! Admin tez orada siz bilan bog'lanadi.")
-      } else {
-        // Show error message
-        alert(data.message || "So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
-      }
-    } catch (error) {
-      console.error("Error requesting plan purchase:", error)
-      alert("So'rovni yuborishda xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko'ring.")
-    } finally {
-      setPlansLoading(false)
-      setShowPlanModal(false)
-      setSelectedPlan(null)
+  const handleSelectPlan = (plan: (typeof availablePlans)[0]) => {
+    if (plan.slug !== currentPlanSlug) {
+      setSelectedPlan(plan)
     }
   }
 
@@ -1282,87 +1179,32 @@ export default function EducationLanding() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Floating Back to Top Button */}
-        <button
-          onClick={() => scrollToSection("home")}
-          className="fixed bottom-24 right-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 z-40"
-        >
-          <ArrowRight className="h-5 w-5 rotate-[-90deg]" />
-        </button>
-      </footer>
-
-      {/* Plan Selection Modal */}
-      {showPlanModal && selectedPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div
-            data-plan-modal
-            className="bg-white rounded-2xl p-8 m-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+          {/* Floating Back to Top Button */}
+          <button
+            onClick={() => scrollToSection("home")}
+            className="fixed bottom-24 right-24 bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 z-40"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-                <Trophy className="h-6 w-6 mr-2 text-blue-600" />
-                Reja Tasdiqlash
-              </h3>
-              <Button variant="outline" size="sm" onClick={() => setShowPlanModal(false)} className="hover:bg-gray-100">
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-xl font-semibold text-gray-900">{selectedPlan.name}</h4>
-                  <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1">
-                    <Star className="h-3 w-3 mr-1" />
-                    Tanlangan
-                  </Badge>
-                </div>
-
-                <div className="mb-4">
-                  <span className="text-3xl font-bold text-blue-600">{selectedPlan.price.toLocaleString()}</span>
-                  <span className="text-lg text-gray-600 ml-1">so'm</span>
-                  <span className="text-sm text-gray-500 ml-2">({selectedPlan.duration} kun)</span>
-                </div>
-
-                <p className="text-gray-700 mb-4">{selectedPlan.description}</p>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-center mb-2">
-                  <MessageCircle className="h-5 w-5 text-yellow-600 mr-2" />
-                  <h5 className="font-semibold text-yellow-800">Keyingi qadam</h5>
-                </div>
-                <p className="text-yellow-700 text-sm">
-                  Tasdiqlashdan so'ng siz Telegram orqali admin bilan bog'lanasiz. Admin sizga to'lov jarayoni va reja
-                  aktivlashtirish haqida batafsil ma'lumot beradi.
-                </p>
-              </div>
-
-              <div className="flex space-x-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPlanModal(false)}
-                  className="flex-1 border-2 border-gray-300 hover:bg-gray-50"
-                >
-                  Orqaga
-                </Button>
-                <Button
-                  onClick={handleConfirmPlanSelection}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Admin bilan Bog'lanish
-                </Button>
-              </div>
-            </div>
-          </div>
+            <ArrowRight className="h-5 w-5 rotate-[-90deg]" />
+          </button>
         </div>
-      )}
+      </footer>
 
       {/* AI Assistant Component */}
       <AIAssistant />
+      
+      <PurchasePlanModal
+        isOpen={showPlanModal}
+        onClose={() => {
+          setShowPlanModal(false)
+          setSelectedPlan(null)
+        }}
+        availablePlans={availablePlans}
+        plansLoading={plansLoading}
+        currentPlanSlug={currentPlanSlug || undefined}
+        onPlanSelect={handleSelectPlan}
+        selectedPlan={selectedPlan}
+      />
     </div>
   )
 }

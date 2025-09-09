@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 export default defineConfig({
     plugins: [
@@ -15,7 +16,7 @@ export default defineConfig({
     ],
     define: {
         // Pass environment variables to the frontend
-        'import.meta.env.VITE_TELEGRAM_BOT_USERNAME': JSON.stringify(process.env.VITE_TELEGRAM_BOT_USERNAME || 'math_ai_integrator_bot'),
+        'import.meta.env.VITE_TELEGRAM_BOT_USERNAME': JSON.stringify(process.env.TELEGRAM_BOT_USERNAME || 'math_ai_integrator_bot'),
     },
     server: {
         host: '0.0.0.0',
@@ -28,6 +29,11 @@ export default defineConfig({
         hmr: {
             host: 'localhost',
             protocol: 'ws',
+        },
+    },
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, './resources/js'),
         },
     },
 });

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('admin_response')->nullable();
             $table->timestamp('responded_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
             
             // Foreign key constraints
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
